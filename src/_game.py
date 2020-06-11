@@ -20,6 +20,14 @@ class Game:
         raise NotImplementedError
 
     @staticmethod
+    def board_after_move(board, move):
+        """
+        Make a move on the board and return it. Does not affect any instances
+        of the class. Should be a valid move and return a valid game board.
+        """
+        raise NotImplementedError
+
+    @staticmethod
     def get_initial_board():
         """
         Get the initial game board for this game. For Connect 4, for instance,
@@ -28,7 +36,18 @@ class Game:
         """
         raise NotImplementedError
 
-    def get_legal_moves(self) -> torch.Tensor:
+    @staticmethod
+    def get_legal_moves(board) -> torch.Tensor:
+        """
+        Get a list of legal moves for the given board game position. Should
+        return a `torch.Tensor` full of booleans that represent whether a move
+        is valid or not. Does not affect internal state of any instances of
+        this class.
+        """
+        raise NotImplementedError
+
+
+    def current_legal_moves(self) -> torch.Tensor:
         """
         Get a dynamic list of legal moves for the current game position. Should
         return a `torch.Tensor` full of booleans that represent whether a move
