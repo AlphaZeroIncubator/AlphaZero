@@ -33,4 +33,5 @@ jobs:
     - run: pytest tests/
     - name: Run PyTest tests
       run: |
+        pip install -e .
         pytest tests/
