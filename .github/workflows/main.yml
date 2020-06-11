@@ -24,3 +24,11 @@ jobs:
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
         git commit -am "fixup! Format Python code with psf/black push"
         git push --force origin HEAD:$GITHUB_REF
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+    - run: pip install pytest
+    - run: pytest tests/
+    - name: Run PyTest tests
