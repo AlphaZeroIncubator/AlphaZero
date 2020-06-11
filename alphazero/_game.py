@@ -146,12 +146,13 @@ class TicTacToe(Game):
         if board_state is None:
             self._board = self.get_initial_board(width, height)
         else:
-            if width * height != len(board_state):
+            tensor = torch.Tensor(board_state)
+            if width * height != tensor.numel():
                 raise ValueError(
                     f"width and height dimensions {width}, {height} do not "
-                    f"match board state size {len(board_state)}"
+                    f"match board state size {tensor.shape}"
                 )
-            self._board = board_state
+            self._board = tensor
         self._move_count = 0
         self._players = [0, 1]
 
@@ -183,13 +184,11 @@ class TicTacToe(Game):
             raise ValueError(f"invalid player for move {move}")
 
         if (
-            move[0] > self._board.shape[0]
-            or move[1] > self._board.shape[1]
+            move[0] > board.shape[0]
+            or move[1] > board.shape[1]
             or any([m < 0 for m in move[1:]])
         ):
-            raise IndexError(
-                f"invalid move {move} for board shaped {self._board.shape}"
-            )
+            raise IndexError(f"invalid move {move} for board shaped {board.shape}")
 
         board[move] = player
 
@@ -258,7 +257,7 @@ class TicTacToe(Game):
         just return a boolean True/False.
         """
 
-        if any(get_game_status(board)):
+        if any(TicTacToe.get_game_status(board)):
             return True
         # implicit else
         return False
@@ -270,17 +269,17 @@ class TicTacToe(Game):
         whose perspective we're looking for, 0 for a draw, -1 for a loss, or
         None for undetermined, when the game is not over yet.
         """
-        if any(board == -1):
-            return None
 
-        status = get_game_status(board)
+        status = TicTacToe.get_game_status(board)
         zero_win = any(status[:3])
         one_win = any(status[3:])
 
         if zero_win:
             result = 1
-        if one_win:
+        elif one_win:
             result = -1
+        elif torch.any(board.eq(-1)):
+            return None
         else:
             result = 0
 
@@ -316,7 +315,7 @@ class TicTacToe(Game):
         `params`. This dict should contain all the width, height, board state
         parameters that may be needed to create an instance of this game class.
         """
-        return cls(params)
+        return cls(**params)
 
     def reset(self) -> None:
         """
@@ -350,7 +349,7 @@ class TicTacToe(Game):
         Mirror the board position horizontally. Should be implemented per
         subclass.
         """
-        return board.flip(0)
+        return board.flip(1)
 
     @staticmethod
     def mirror_v(board):
@@ -361,4 +360,4 @@ class TicTacToe(Game):
         For some games, like Connect 4, this may not be a valid transformation.
         This may require handling downstream in whatever uses this function.
         """
-        return board.flip(1)
+        return board.flip(0)
