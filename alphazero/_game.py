@@ -152,7 +152,7 @@ class TicTacToe(Game):
                     f"width and height dimensions {width}, {height} do not "
                     f"match board state size {tensor.shape}"
                 )
-            self._board = tensor
+            self._board = tensor.view(width, height)
         self._move_count = 0
         self._players = [0, 1]
 
@@ -189,6 +189,11 @@ class TicTacToe(Game):
             or any([m < 0 for m in move[1:]])
         ):
             raise IndexError(f"invalid move {move} for board shaped {board.shape}")
+
+        if board[move] != -1:
+            raise ValueError(
+                f"invalid move {move}: space already occupied in board {board}"
+            )
 
         board[move] = player
 
