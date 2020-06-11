@@ -5,7 +5,6 @@ from typing import Union
 
 
 class Game:
-
     def __init__(self, *args):
         """
         Construct an instance of the game class.
@@ -45,7 +44,6 @@ class Game:
         this class.
         """
         raise NotImplementedError
-
 
     def current_legal_moves(self) -> torch.Tensor:
         """
