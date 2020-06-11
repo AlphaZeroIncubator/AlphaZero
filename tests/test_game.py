@@ -195,7 +195,7 @@ class Test_TicTacToe:
 
         json_dict = {"height": 4, "width": 5, "board_state": board}
 
-        ttt = TicTacToe(width=4, height=5, board_state=board)
+        ttt = TicTacToe(width=5, height=4, board_state=board)
 
         ttt_json = TicTacToe.from_json(**json_dict)
 
@@ -212,6 +212,7 @@ class Test_TicTacToe:
         self.ttt._board[0] = 1
 
         assert self.ttt.is_valid() == False
+        self.ttt.reset()
 
     def test_mirror_h(self):
         board = torch.Tensor([[0, 1, 0], [1, 0, 0], [1, 0, 1],])
@@ -230,10 +231,56 @@ class Test_TicTacToe:
         assert torch.all(TicTacToe.mirror_v(board).eq(mirrored))
 
     def test_make_move_same_spot(self):
-        pass
+        self.ttt.make_move((0, 0))
+
+        with pytest.raises(ValueError):
+            self.ttt.make_move((0, 0))
 
     def test_board_state_list_of_lists_accepted(self):
-        pass
+        board = [
+            [-1, -1, -1],
+            [-1, -1, -1],
+            [-1, -1, -1],
+        ]
+
+        ttt = TicTacToe(board_state=board)
+
+        assert ttt.width == 3
+        assert ttt.height == 3
+        assert torch.all(ttt.board_state.eq(-1))
+
+    def test_board_state_list_accepted(self):
+        board = [
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+        ]
+
+        ttt = TicTacToe(board_state=board)
+
+        assert ttt.width == 3
+        assert ttt.height == 3
+        assert torch.all(ttt.board_state.eq(-1))
 
     def test_json_accepts_any_order_of_params(self):
-        pass
+        board = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+        ]
+
+        json_dict = {"board_state": board, "height": 4, "width": 5}
+
+        ttt = TicTacToe(width=5, height=4, board_state=board)
+
+        ttt_json = TicTacToe.from_json(**json_dict)
+
+        assert torch.all(ttt.board_state.eq(ttt_json.board_state))
