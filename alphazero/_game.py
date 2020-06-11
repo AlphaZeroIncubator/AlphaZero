@@ -138,7 +138,7 @@ class Game:
         raise NotImplementedError
 
 
-class TicTacToe:
+class TicTacToe(Game):
     def __init__(self, width=3, height=3, board_state=None):
         """
         Construct an instance of the game class.
@@ -160,26 +160,40 @@ class TicTacToe:
         Make a move on the board. Should be a valid move and return a valid
         game board.
         """
+        self._board = self.board_after_move(
+            self._board, self._players[self._move_count % 2], move
+        )
+        self._move_count += 1
 
+        if not self.is_valid():
+            raise ValueError(f"Board state {self._board} is not valid.")
+
+    @staticmethod
+    def board_after_move(board, player: int, move: (int, int)):
+        """
+        Make a move on the board and return it. Does not affect any instances
+        of the class. Should be a valid move and return a valid game board.
+        """
         if not isinstance(move, tuple):
             raise TypeError(f"move is of type {type(move)} but must be tuple")
         if not len(move) == 2:
-            raise ValueError(f"move is of length {len(move)} but must be 2")
+            raise ValueError(f"move is of length {len(move)} but must be 3")
+
+        if not player in (0, 1):
+            raise ValueError(f"invalid player for move {move}")
 
         if (
             move[0] > self._board.shape[0]
             or move[1] > self._board.shape[1]
-            or any([m < 0 for m in move])
+            or any([m < 0 for m in move[1:]])
         ):
             raise IndexError(
                 f"invalid move {move} for board shaped {self._board.shape}"
             )
 
-        self._board[move] = self._players[self._move_count % 2]
-        self._move_count += 1
+        board[move] = player
 
-        if not self.is_valid():
-            raise ValueError(f"Board state {self._board} is not valid.")
+        return board
 
     @staticmethod
     def get_initial_board(width=3, height=3):
@@ -190,13 +204,23 @@ class TicTacToe:
         """
         return torch.full((width, height), -1)
 
-    def get_legal_moves(self) -> torch.Tensor:
+    @staticmethod
+    def get_legal_moves(board) -> torch.Tensor:
+        """
+        Get a list of legal moves for the given board game position. Should
+        return a `torch.Tensor` full of booleans that represent whether a move
+        is valid or not. Does not affect internal state of any instances of
+        this class.
+        """
+        return board == -1
+
+    def current_legal_moves(self) -> torch.Tensor:
         """
         Get a dynamic list of legal moves for the current game position. Should
         return a `torch.Tensor` full of booleans that represent whether a move
         is valid or not.
         """
-        return self._board == -1
+        return self.get_legal_moves(self._board)
 
     @staticmethod
     def get_game_status(board) -> tuple:
