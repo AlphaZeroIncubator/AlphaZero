@@ -22,7 +22,7 @@ class Game:
         raise NotImplementedError
 
 
-class MCTS_Node(object):
+class MCTSNode:
     def __init__(
         self,
         state: torch.Tensor,
@@ -32,7 +32,7 @@ class MCTS_Node(object):
 
         self._action = action
         self._state = state
-        self._children: List[MCTS_Node] = []
+        self._children: List[MCTSNode] = []
         self._value = None
         self._policy = None
         self.n_visit = 0
@@ -41,7 +41,7 @@ class MCTS_Node(object):
         self.prior = prior
         self.parent = None
 
-    def add_child(self, child: MCTS_Node):
+    def add_child(self, child: MCTSNode):
         self._children.append(child)
         child.parent = self
 
@@ -54,7 +54,7 @@ class MCTS_Node(object):
             action = torch.zeros(legal_actions.size())
             action[index] = 1
             prior = self._policy[index].item()
-            child = MCTS_Node(
+            child = MCTSNode(
                 state=Game.make_move(self._state, action), action=action, prior=prior
             )
             self.add_child(child)
@@ -91,14 +91,14 @@ class MCTS_Node(object):
 
 
 def mcts(
-    start_node: MCTS_Node,
+    start_node: MCTSNode,
     game: Game,
     net: torch.nn.Module,
     n_iter: int = 1600,
     c_puct: float = 1.0,
     temperature: float = 1.0,
 ) -> torch.Tensor:
-    def backpropagate(leaf_node: MCTS_Node):
+    def backpropagate(leaf_node: MCTSNode):
         _, v_leaf = leaf_node.calc_policy_value(
             network=net
         )  # Think about batching/efficiency
@@ -116,7 +116,7 @@ def mcts(
             current.value += v_leaf
             current = current.parent
 
-    def forward(root_node: MCTS_Node):
+    def forward(root_node: MCTSNode):
         current = root_node
         while not current.is_leaf and not current.is_terminal:
             # Select child with highest cb
@@ -152,7 +152,7 @@ def self_play(
     temperature = 0.0001
     data = []
     is_terminal, res = game.is_terminal(pos)
-    node = MCTS_Node(state=pos)
+    node = MCTSNode(state=pos)
     while not is_terminal:
         policy, node = mcts(
             start_node=node,
@@ -168,3 +168,17 @@ def self_play(
     data = [row + (res,) for row in data]
 
     return data
+
+
+def play_games(
+    game: Game,
+    net: torch.nn.Module,
+    n_mcts_iter: int = 1600,
+    n_games_thread=2500,
+    threads=4,
+):
+    # Arg games/thread instead?
+    def play_games_thread():
+        data = []
+        for i in range(n_games_thread):
+            
