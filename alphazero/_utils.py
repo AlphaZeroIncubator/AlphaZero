@@ -7,7 +7,7 @@ import torch.nn as nn
 def AlphaGoZeroLoss(
     ground_truth: (torch.Tensor, torch.Tensor),
     output: (torch.Tensor, torch.Tensor),
-    ratio: int = 1,
+    ratio: float = 1.0,
 ):
     """
     Calculates AlphaGoZero style loss.
