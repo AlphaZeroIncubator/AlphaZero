@@ -1,10 +1,13 @@
 #! /usr/bin/python3
 
+import torch
 import torch.nn as nn
 
 
 def AlphaGoZeroLoss(
-    ground_truth: (torch.Tensor, int), output: (torch.Tensor, int), ratio: int = 1
+    ground_truth: (torch.Tensor, torch.Tensor),
+    output: (torch.Tensor, torch.Tensor),
+    ratio: int = 1,
 ):
     """
     Calculates AlphaGoZero style loss.
