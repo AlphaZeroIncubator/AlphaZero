@@ -280,4 +280,3 @@ def self_play(
 #    def play_games_thread():
 #        data = []
 #        for i in range(n_games_thread):
-

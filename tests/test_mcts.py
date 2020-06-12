@@ -14,4 +14,3 @@ class TestMCTS:
             c_puct=5.0,
         )
         assert torch.argmax(policy).item() == 4  # Middle
-

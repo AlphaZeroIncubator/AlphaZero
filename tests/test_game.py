@@ -289,4 +289,3 @@ class Test_TicTacToe:
         board = torch.Tensor([[1, 0, 1], [1, 0, 1], [0, 1, 0]])
 
         assert TicTacToe.is_game_over(board)
-
