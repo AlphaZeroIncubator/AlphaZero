@@ -3,7 +3,9 @@
 import torch.nn as nn
 
 
-def AlphaGoZeroLoss(ground_truth, output, ratio=1):
+def AlphaGoZeroLoss(
+    ground_truth: (torch.Tensor, int), output: (torch.Tensor, int), ratio: int = 1
+):
     """
     Calculates AlphaGoZero style loss.
     L2 regularization is included in the optimizer and would be very slow to
