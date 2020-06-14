@@ -3,12 +3,14 @@ import torch.nn as nn
 
 
 class ResidualBlock(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int):
+    def __init__(
+        self, in_channels: int, out_channels: int, activation=nn.ReLU(inplace=False)
+    ):
         super(ResidualBlock, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1)
         self.conv2 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1)
         self.batch_norm = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=False)
+        self.activation = activation
 
     def forward(self, x):
         """
@@ -19,13 +21,13 @@ class ResidualBlock(nn.Module):
         # first convolution
         out = self.conv1(x)
         out = self.batch_norm(out)
-        out = self.relu(out)
+        out = self.activation(out)
 
         # second convolution, add input after batchnorm step
         out = self.conv2(out)
         out = self.batch_norm(out)
         out += residual
-        out = self.relu(out)
+        out = self.activation(out)
 
         return out
 
@@ -39,12 +41,19 @@ class SidNet(nn.Module):
             num_blocks: number of residual blocks to create
     """
 
-    def __init__(self, block, in_channels: int, enc_channels: int, num_blocks: int):
+    def __init__(
+        self,
+        block,
+        in_channels: int,
+        enc_channels: int,
+        num_blocks: int,
+        activation=nn.ReLU(inplace=False),
+    ):
         super(SidNet, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, enc_channels, kernel_size=3, stride=1)
         self.bn = nn.BatchNorm2d(enc_channels)
         self.resblock = self.make_layer(block, enc_channels, num_blocks)
-        self.relu = nn.ReLU(inplace=False)
+        self.activation = activation
 
     def make_layer(self, block, out_channels, num_blocks, stride=1):
 
@@ -57,7 +66,7 @@ class SidNet(nn.Module):
 
         encoding = self.conv1(x)
         encoding = self.bn(encoding)
-        encoding = self.relu(encoding)
+        encoding = self.activation(encoding)
         encoding = self.resblock(encoding)
 
         return encoding
@@ -72,7 +81,9 @@ class PolicyHead(nn.Module):
     being played to obtain board positions and applies the transformations mentioned below.
     """
 
-    def __init__(self, enc_channels: int, game: Game):
+    def __init__(
+        self, enc_channels: int, game: Game, activation=nn.ReLU(inplace=False)
+    ):
 
         super(PolicyHead, self).__init__()
         self.policyconv = nn.Conv2D(
@@ -82,12 +93,12 @@ class PolicyHead(nn.Module):
         self.policyfc = nn.Linear(
             in_channels=enc_channels, out_channels=game.width * game.height,
         )
-        self.relu = nn.ReLU(inplace=False)
+        self.activation = activation
 
     def forward(self, encoding):
         policy = self.policyconv(encoding)
         policy = self.policybn(policy)
-        policy = self.relu(policy)
+        policy = self.activation(policy)
         # a step here I am not completely sure yet
         policy = self.policyfc(policy)
         return policy
@@ -101,9 +112,7 @@ class ValueHead(nn.Module):
     previous residual nets and applies the transformations mentioned below.
     """
 
-    def __init__(
-        self, enc_channels: int,
-    ):
+    def __init__(self, enc_channels: int, activation=nn.ReLU(inplace=False)):
 
         super(ValueHead, self).__init__()
         self.valueconv = nn.Conv2D(
@@ -114,7 +123,8 @@ class ValueHead(nn.Module):
         # figuring out what the in_channel should be for this
         self.valuefc1 = nn.Linear(in_channels=number, out_channels=256)
         self.valuefc2 = nn.Linear(in_channels=256, out_channels=1)
-        self.relu = nn.ReLU(inplace=False)
+        self.activation = activation
+
         self.tanh = nn.tanh(inplace=False)
 
     def forward(self, encoding):
