@@ -137,6 +137,13 @@ class Game:
         """
         raise NotImplementedError
 
+    @staticmethod
+    def n_players():
+        """
+        Get the number of players in the game.
+        """
+        raise NotImplementedError
+
 
 class TicTacToe(Game):
     def __init__(self, width=3, height=3, board_state=None):
@@ -366,3 +373,10 @@ class TicTacToe(Game):
         This may require handling downstream in whatever uses this function.
         """
         return board.flip(0)
+
+    @staticmethod
+    def n_players():
+        """
+        Get the number of players in the game.
+        """
+        return 2

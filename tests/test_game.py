@@ -284,3 +284,6 @@ class Test_TicTacToe:
         ttt_json = TicTacToe.from_json(**json_dict)
 
         assert torch.all(ttt.board_state.eq(ttt_json.board_state))
+
+    def test_n_players(self):
+        assert TicTacToe.n_players() == 2
