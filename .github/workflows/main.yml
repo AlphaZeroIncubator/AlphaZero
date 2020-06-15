@@ -39,3 +39,12 @@ jobs:
     - name: Run PyTest tests
       run: |
         pytest tests/
+  flake8:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+    - run: pip install flake8
+    - name: Run flake8
+      run: |
+        flake8 .
