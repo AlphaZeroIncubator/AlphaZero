@@ -4,8 +4,8 @@ import os
 import numpy as np
 import torch
 import torch.nn as nn
-from storage import load_board
-from mcts import self_play
+from .storage import load_board
+from .mcts import self_play
 from copy import deepcopy
 
 
