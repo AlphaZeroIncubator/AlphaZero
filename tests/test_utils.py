@@ -1,7 +1,6 @@
 #! /usr/bin/python3
 
-import pytest
-from alphazero import *
+from alphazero import AlphaGoZeroLoss
 import torch
 
 
@@ -23,4 +22,6 @@ class Test_Loss:
 
         pred = (policy_pred, q_pred)
 
-        assert torch.allclose(AlphaGoZeroLoss(truth, pred), torch.Tensor([1000.4867]))
+        assert torch.allclose(
+            AlphaGoZeroLoss(truth, pred), torch.Tensor([1000.4867])
+        )

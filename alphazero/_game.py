@@ -187,7 +187,7 @@ class TicTacToe(Game):
         if not len(move) == 2:
             raise ValueError(f"move is of length {len(move)} but must be 3")
 
-        if not player in (0, 1):
+        if player not in (0, 1):
             raise ValueError(f"invalid player for move {move}")
 
         if (
@@ -195,7 +195,9 @@ class TicTacToe(Game):
             or move[1] > board.shape[1]
             or any([m < 0 for m in move[1:]])
         ):
-            raise IndexError(f"invalid move {move} for board shaped {board.shape}")
+            raise IndexError(
+                f"invalid move {move} for board shaped {board.shape}"
+            )
 
         if board[move] != -1:
             raise ValueError(
