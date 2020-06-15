@@ -114,7 +114,7 @@ class PolicyHead(nn.Module):
 
         if pass_move:
             self.policyfc = nn.Linear(
-                in_features=self.poss_moves * 2, out_features=self.poss_moves + 1
+                in_features=self.poss_moves * 2, out_features=self.poss_moves + 1,
             )
         else:
             self.policyfc = nn.Linear(
