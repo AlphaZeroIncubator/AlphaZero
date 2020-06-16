@@ -114,7 +114,8 @@ class PolicyHead(nn.Module):
 
         if pass_move:
             self.policyfc = nn.Linear(
-                in_features=self.poss_moves * 2, out_features=self.poss_moves + 1,
+                in_features=self.poss_moves * 2,
+                out_features=self.poss_moves + 1,
             )
         else:
             self.policyfc = nn.Linear(
@@ -143,7 +144,11 @@ class ValueHead(nn.Module):
     """
 
     def __init__(
-        self, enc_channels: int, game, activation=nn.ReLU(inplace=False), batch_on=True,
+        self,
+        enc_channels: int,
+        game,
+        activation=nn.ReLU(inplace=False),
+        batch_on=True,
     ):
 
         super(ValueHead, self).__init__()
