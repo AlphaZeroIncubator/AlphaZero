@@ -1,14 +1,16 @@
 #! /usr/bin/python3
 
 import pytest
-from alphazero import *
+from alphazero import TicTacToe
 import torch
 
 
 class Test_TicTacToe:
     def setup_class(self):
         self.ttt = TicTacToe()
-        self.dummy_tensor = torch.Tensor([[0, -1, -1], [-1, -1, -1], [-1, -1, -1],])
+        self.dummy_tensor = torch.Tensor(
+            [[0, -1, -1], [-1, -1, -1], [-1, -1, -1]]
+        )
 
     def test_dims_default(self):
         ttt = self.ttt
@@ -63,7 +65,7 @@ class Test_TicTacToe:
 
         board = TicTacToe.board_after_move(board, 1, (0, 1))
 
-        next_state = torch.Tensor([[0, 1, -1], [-1, -1, -1], [-1, -1, -1],])
+        next_state = torch.Tensor([[0, 1, -1], [-1, -1, -1], [-1, -1, -1]])
 
         assert torch.all(board.eq(next_state))
 
@@ -99,76 +101,76 @@ class Test_TicTacToe:
     def test_current_legal_moves(self):
         self.ttt.make_move((0, 0))
 
-        legal_moves = self.ttt.current_legal_moves()
+        self.ttt.current_legal_moves()
         self.ttt.reset()
 
     def test_get_game_status(self):
-        board = torch.Tensor([[-0, -1, -1], [-1, -1, -1], [-1, -1, -1],])
+        board = torch.Tensor([[-0, -1, -1], [-1, -1, -1], [-1, -1, -1]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (False, False, False, False, False, False)
 
-        board = torch.Tensor([[0, -1, -1], [0, -1, -1], [0, -1, -1],])
+        board = torch.Tensor([[0, -1, -1], [0, -1, -1], [0, -1, -1]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (True, False, False, False, False, False)
 
-        board = torch.Tensor([[0, 0, 0], [-1, -1, -1], [-1, -1, -1],])
+        board = torch.Tensor([[0, 0, 0], [-1, -1, -1], [-1, -1, -1]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (False, True, False, False, False, False)
 
-        board = torch.Tensor([[0, -1, -1], [-1, 0, -1], [-1, -1, 0],])
+        board = torch.Tensor([[0, -1, -1], [-1, 0, -1], [-1, -1, 0]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (False, False, True, False, False, False)
 
-        board = torch.Tensor([[-1, -1, 0], [-1, 0, -1], [0, -1, -1],])
+        board = torch.Tensor([[-1, -1, 0], [-1, 0, -1], [0, -1, -1]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (False, False, True, False, False, False)
 
-        board = torch.Tensor([[1, -1, -1], [1, -1, -1], [1, -1, -1],])
+        board = torch.Tensor([[1, -1, -1], [1, -1, -1], [1, -1, -1]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (False, False, False, True, False, False)
 
-        board = torch.Tensor([[1, 1, 1], [-1, -1, -1], [-1, -1, -1],])
+        board = torch.Tensor([[1, 1, 1], [-1, -1, -1], [-1, -1, -1]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (False, False, False, False, True, False)
 
-        board = torch.Tensor([[1, -1, -1], [-1, 1, -1], [-1, -1, 1],])
+        board = torch.Tensor([[1, -1, -1], [-1, 1, -1], [-1, -1, 1]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (False, False, False, False, False, True)
 
-        board = torch.Tensor([[-1, -1, 1], [-1, 1, -1], [1, -1, -1],])
+        board = torch.Tensor([[-1, -1, 1], [-1, 1, -1], [1, -1, -1]])
 
         status = TicTacToe.get_game_status(board)
 
         assert status == (False, False, False, False, False, True)
 
     def test_is_game_over(self):
-        board = torch.Tensor([[0, -1, -1], [0, -1, -1], [0, -1, -1],])
+        board = torch.Tensor([[0, -1, -1], [0, -1, -1], [0, -1, -1]])
 
-        assert TicTacToe.is_game_over(self.dummy_tensor) == False
-        assert TicTacToe.is_game_over(board) == True
+        assert TicTacToe.is_game_over(self.dummy_tensor) is False
+        assert TicTacToe.is_game_over(board) is True
 
     def test_result(self):
-        board = torch.Tensor([[0, -1, -1], [0, -1, -1], [0, -1, -1],])
+        board = torch.Tensor([[0, -1, -1], [0, -1, -1], [0, -1, -1]])
 
-        board_2 = torch.Tensor([[1, -1, -1], [1, -1, -1], [1, -1, -1],])
+        board_2 = torch.Tensor([[1, -1, -1], [1, -1, -1], [1, -1, -1]])
 
-        draw = torch.Tensor([[0, 1, 0], [1, 0, 0], [1, 0, 1],])
+        draw = torch.Tensor([[0, 1, 0], [1, 0, 0], [1, 0, 1]])
 
         assert TicTacToe.result(self.dummy_tensor) is None
         assert TicTacToe.result(board) == 1
@@ -211,22 +213,22 @@ class Test_TicTacToe:
         self.ttt._board = torch.full((3, 3), -2)
         self.ttt._board[0] = 1
 
-        assert self.ttt.is_valid() == False
+        assert self.ttt.is_valid() is False
         self.ttt.reset()
 
     def test_mirror_h(self):
-        board = torch.Tensor([[0, 1, 0], [1, 0, 0], [1, 0, 1],])
+        board = torch.Tensor([[0, 1, 0], [1, 0, 0], [1, 0, 1]])
 
-        mirrored = torch.Tensor([[0, 1, 0], [0, 0, 1], [1, 0, 1],])
+        mirrored = torch.Tensor([[0, 1, 0], [0, 0, 1], [1, 0, 1]])
 
         assert torch.all(TicTacToe.mirror_h(board).eq(mirrored))
 
     def test_mirror_v(self):
-        # how is this more readable than having the three lists in separate lines?
-        # dang it, black
-        board = torch.Tensor([[0, 1, 0], [1, 0, 0], [1, 0, 1],])
+        # how is this more readable than having the three lists in
+        # separate lines? dang it, black
+        board = torch.Tensor([[0, 1, 0], [1, 0, 0], [1, 0, 1]])
 
-        mirrored = torch.Tensor([[1, 0, 1], [1, 0, 0], [0, 1, 0],])
+        mirrored = torch.Tensor([[1, 0, 1], [1, 0, 0], [0, 1, 0]])
 
         assert torch.all(TicTacToe.mirror_v(board).eq(mirrored))
 
@@ -289,3 +291,6 @@ class Test_TicTacToe:
         board = torch.Tensor([[1, 0, 1], [1, 0, 1], [0, 1, 0]])
 
         assert TicTacToe.is_game_over(board)
+
+    def test_n_players(self):
+        assert TicTacToe.n_players() == 2
