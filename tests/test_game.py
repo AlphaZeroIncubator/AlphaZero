@@ -8,9 +8,7 @@ import torch
 class Test_TicTacToe:
     def setup_class(self):
         self.ttt = TicTacToe()
-        self.dummy_tensor = torch.Tensor(
-            [[0, -1, -1], [-1, -1, -1], [-1, -1, -1]]
-        )
+        self.dummy_tensor = torch.Tensor([[0, -1, -1], [-1, -1, -1], [-1, -1, -1]])
 
     def test_dims_default(self):
         ttt = self.ttt

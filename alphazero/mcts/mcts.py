@@ -19,6 +19,7 @@ class MCTSNode:
     def __init__(
         self,
         state: torch.Tensor,
+        player: int = 0,
         prior: float = 0,
         action: torch.Tensor = torch.Tensor([]),
     ):
@@ -26,8 +27,8 @@ class MCTSNode:
 
         Args:
             state (torch.Tensor): Board state for node
-            prior (float, optional): Prior for selecting this action/node from parent. 
-            Defaults to 0.
+            prior (float, optional): Prior for selecting this action/node 
+            from parent. Defaults to 0.
             action (torch.Tensor, optional): Action from parent to this node. 
             Defaults to torch.Tensor([]).
         """
@@ -41,6 +42,7 @@ class MCTSNode:
         self.is_terminal = False
         self.prior = prior
         self.parent = None
+        self.player = player
 
     def add_child(self, child: MCTSNode):
         """Add a child to node instance.
@@ -54,8 +56,8 @@ class MCTSNode:
     def rollout(self, game: GameClassType) -> int:
         """Perform a rollout from self.
 
-        Perform a rollout from self, selecting random actions from a uniform prior 
-        until game ends.
+        Perform a rollout from self, selecting random actions from a uniform 
+        prior until game ends.
         Args:
         game (GameClassType): Game that is currently played
 
@@ -63,15 +65,21 @@ class MCTSNode:
             result (int): Final result of rollout
         """
         state = self._state
+        player = self.player
+        n_players = game.n_players()
         while not game.is_game_over(state):
             legal_actions = game.get_legal_moves(state)
             action = sample_tensor_indices(legal_actions, 1)[0]
-            player = 1 if (state == 0).sum() > (state == 1).sum() else 0
             state = game.board_after_move(state, player, action)
-        return game.result(state)
+            player = (player + 1) % n_players
+        # Should probably update below logic in game class
+        return game.result(state) if self.player == 0 else -game.result(state)
 
     def calc_policy_value(
-        self, rollout: bool, game: GameClassType, network: torch.nn.Module = None
+        self,
+        rollout: bool,
+        game: GameClassType,
+        network: torch.nn.Module = None,
     ) -> (torch.Tensor, float):
         """Calculate the policy and value for the node.
 
@@ -101,14 +109,17 @@ class MCTSNode:
         Args:
             game (GameClassType): Game that is played
         """
+        n_players = game.n_players()
         legal_actions = game.get_legal_moves(self._state)
         for index in legal_actions.nonzero():
             action = torch.zeros(legal_actions.size())
             action[tuple(index)] = 1
             prior = self._policy[tuple(index)].item()
-            player = 1 if (self._state == 0).sum() > (self._state == 1).sum() else 0
             child = MCTSNode(
-                state=game.board_after_move(self._state, player, tuple(index)),
+                state=game.board_after_move(
+                    self._state, self.player, tuple(index)
+                ),
+                player=(self.player + 1) % n_players,
                 action=action,
                 prior=prior,
             )
@@ -212,11 +223,12 @@ def mcts(
     Args:
         start_node (MCTSNode): Node to search from
         game (GameClassType): Game that is played
-        rollout (bool, optional): Whether the search uses rollout instead of a network. 
-        Defaults to False.
+        rollout (bool, optional): Whether the search uses rollout instead of 
+        a network. Defaults to False.
         net (torch.nn.Module, optional): Needs to be input if rollout = false
         n_iter (int, optional): How many iterations to run Defaults to 1600.
-        c_puct (float, optional): c_puct value for node evaluation. Defaults to 1.0.
+        c_puct (float, optional): c_puct value for node evaluation. 
+        Defaults to 1.0.
         temperature (float, optional): Temperature for policy calculation. 
         Defaults to 1.0.
         eval (str, optional): Evaluation type. Defaults to "PUCT".
@@ -251,10 +263,12 @@ def mcts(
             current = current.parent
 
     def forward(root_node: MCTSNode):
-        """Run a forward pass through the tree and then backpropagates back through the tree.
+        """Run a forward pass through the tree.
 
+        Run a forward pass through the tree and then backpropagates 
+        back through the tree.
         Args:
-            root_node (MCTSNode): Root node to start from
+        root_node (MCTSNode): Root node to start from
         """
         current = root_node
         while not current.is_leaf and not current.is_terminal:
@@ -272,13 +286,18 @@ def mcts(
     for _ in range(n_iter):
         forward(start_node)
 
-    policy_count = torch.LongTensor([child.n_visit for child in start_node.children])
+    policy_count = torch.LongTensor(
+        [child.n_visit for child in start_node.children]
+    )
 
     sampled_node = start_node.children[
-        torch.multinomial(torch.pow(policy_count, (1 / temperature)).float(), 1).item()
+        torch.multinomial(
+            torch.pow(policy_count, (1 / temperature)).float(), 1
+        ).item()
     ]
     # TODO Maybe just iterate through children once, more efficient?
-    # Currently doing it twice due to output difference, just do forloop instead?
+    # Currently doing it twice due to output difference,
+    # just do forloop instead?
     return (
         sum([child.action * child.n_visit for child in start_node.children]),
         sampled_node,

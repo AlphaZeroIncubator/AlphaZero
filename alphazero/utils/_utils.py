@@ -6,7 +6,9 @@ import numpy as np
 import torch
 
 
-def sample_tensor_indices(tensor: torch.Tensor, n_samples: int = 1) -> List[tuple]:
+def sample_tensor_indices(
+    tensor: torch.Tensor, n_samples: int = 1
+) -> List[tuple]:
     """Do multinomial sampling on tensor, returning indices.
 
     Args:
