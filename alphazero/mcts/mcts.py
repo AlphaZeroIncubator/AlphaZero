@@ -1,44 +1,20 @@
+"""Functions and classes for MCTS implementation."""
 from __future__ import annotations
+
 from typing import List, TypeVar
-import numpy as np
-import torch
-from alphazero import TicTacToe
+
 from alphazero.utils import sample_tensor_indices
+
+import numpy as np
+
+import torch
+
 
 GameClassType = TypeVar("T", bound="Game")
 
 
-class BoardConverter:
-    @staticmethod
-    def board_to_tensor(board):
-        raise NotImplementedError
-
-    @staticmethod
-    def action_to_tensor(action):
-        # Not sure if needed
-        raise NotImplementedError
-
-    @staticmethod
-    def tensor_to_action(action_tensor):
-        raise NotImplementedError
-
-
-class TicTacToeConverter(BoardConverter):
-    @staticmethod
-    def board_to_tensor(board):
-        player_1 = board == 0
-        player_2 = board == 1
-        player = 1 if player_1.sum() > player_2.sum() else 0
-        player_layer = torch.full(board.size(), player)
-        return torch.stack((player_1, player_2, player))
-
-    ## TODO: Flesh this out and move
-
-
 class MCTSNode:
-    """
-    Node Class for MCTS tree search
-    """
+    """Node Class for MCTS tree search."""
 
     def __init__(
         self,
@@ -46,7 +22,15 @@ class MCTSNode:
         prior: float = 0,
         action: torch.Tensor = torch.Tensor([]),
     ):
+        """Create an MCTSNode.
 
+        Args:
+            state (torch.Tensor): Board state for node
+            prior (float, optional): Prior for selecting this action/node from parent. 
+            Defaults to 0.
+            action (torch.Tensor, optional): Action from parent to this node. 
+            Defaults to torch.Tensor([]).
+        """
         self._action = action
         self._state = state
         self._children: List[MCTSNode] = []
@@ -59,8 +43,7 @@ class MCTSNode:
         self.parent = None
 
     def add_child(self, child: MCTSNode):
-        """
-        Adds a child to node instance
+        """Add a child to node instance.
 
         Args:
             child (MCTSNode): Node to be added as child
@@ -69,10 +52,12 @@ class MCTSNode:
         child.parent = self
 
     def rollout(self, game: GameClassType) -> int:
-        """
-        Performs a rollout from self, selecting random actions from a uniform prior until game ends
+        """Perform a rollout from self.
+
+        Perform a rollout from self, selecting random actions from a uniform prior 
+        until game ends.
         Args:
-            game (GameClassType): Game that is currently played
+        game (GameClassType): Game that is currently played
 
         Returns:
             result (int): Final result of rollout
@@ -83,18 +68,19 @@ class MCTSNode:
             action = sample_tensor_indices(legal_actions, 1)[0]
             player = 1 if (state == 0).sum() > (state == 1).sum() else 0
             state = game.board_after_move(state, player, action)
-        result = game.result(state)
-        return result
+        return game.result(state)
 
     def calc_policy_value(
         self, rollout: bool, game: GameClassType, network: torch.nn.Module = None
     ) -> (torch.Tensor, float):
-        """
-        Calculates the policy and value for the node. If rollout performs a rollout, else uses network to get policy and value
+        """Calculate the policy and value for the node.
+
+        Calculate the policy and value for the node. If rollout = True,
+        performs a rollout, else uses network to get policy and value.
         Args:
-            rollout (bool): Whether to perform a rollout or not
-            game (GameClassType): Game that is played
-            network (torch.nn.Module, optional): Optional, must be set if rollout is false
+        rollout (bool): Whether to perform a rollout or not
+        game (GameClassType): Game that is played
+        network (torch.nn.Module, optional): Must be set if rollout is false
 
         Returns:
             policy (torch.Tensor): The calculated policy
@@ -110,8 +96,8 @@ class MCTSNode:
         return self._policy, self._value
 
     def expand(self, game: GameClassType):
-        """
-        Expands node
+        """Expand node.
+
         Args:
             game (GameClassType): Game that is played
         """
@@ -130,35 +116,83 @@ class MCTSNode:
 
     @property
     def is_leaf(self):
+        """Property for whether a node is a leaf or not.
+
+        Returns:
+            bool: Whether the node is a leaf or not
+        """
         return len(self.children) == 0
 
     @property
     def q_value(self):
+        """Calculate the Q values for puct.
+
+        Returns:
+            float: The q value
+        """
         if self.n_visit > 0:
             return self.total_value / self.n_visit
         else:
             return 0
 
     @property
-    def state(self):
+    def state(self) -> torch.Tensor:
+        """Property for the node state.
+
+        Returns:
+            torch.Tensor: The node state
+        """
         return self._state
 
     @property
-    def action(self):
+    def action(self) -> torch.Tensor:
+        """Property for the nodes action, i.e. edge to parent.
+
+        Returns:
+            torch.Tensor: The node action
+        """
         return self._action
 
     @property
-    def children(self):
+    def children(self) -> List[MCTSNode]:
+        """Property for the nodes children.
+
+        Returns:
+            List[MCTSNode]: The nodes children as a list
+        """
         return self._children
 
     @property
-    def is_root(self):
+    def is_root(self) -> bool:
+        """Whether the node is a root node.
+
+        Returns:
+            bool: Whether the node is a root node
+        """
         return self.parent is None
 
     def u_value(self, sum_n: int, c_puct: float = 1.0):
+        """Calculate U for the puct calculation.
+
+        Args:
+            sum_n (int): Sum of all visits to children from parent
+            c_puct (float, optional): Puct parameter. Defaults to 1.0.
+
+        Returns:
+            float: U value
+        """
         return c_puct * self.prior * np.sqrt(sum_n) / (1 + self.n_visit)
 
-    def confidence_bound(self, sum_n: int, c_puct: float = 1.0):
+    def puct(self, sum_n: int, c_puct: float = 1.0):
+        """Calculate puct for the mcts.
+
+        Args:
+            sum_n (int): Sum of all visits to children from parent
+            c_puct (float, optional): Puct parameter. Defaults to 1.0.
+
+        Returns:
+            float: puct value
+        """
         return self.u_value(sum_n, c_puct) + self.q_value
 
 
@@ -170,30 +204,35 @@ def mcts(
     n_iter: int = 1600,
     c_puct: float = 1.0,
     temperature: float = 1.0,
-    eval: str = "PUCT",
+    # eval_func: str = "PUCT",
 ) -> (torch.Tensor, MCTSNode):
     # TODO USE EVAL VARIABLE
-    """
-    Runs mcts search from start node
+    """Run mcts search from start node.
+
     Args:
         start_node (MCTSNode): Node to search from
         game (GameClassType): Game that is played
-        rollout (bool, optional): Whether the search uses rollout instead of a network. Defaults to False.
+        rollout (bool, optional): Whether the search uses rollout instead of a network. 
+        Defaults to False.
         net (torch.nn.Module, optional): Needs to be input if rollout = false
         n_iter (int, optional): How many iterations to run Defaults to 1600.
         c_puct (float, optional): c_puct value for node evaluation. Defaults to 1.0.
-        temperature (float, optional): Temperature for policy calculation. Defaults to 1.0.
+        temperature (float, optional): Temperature for policy calculation. 
+        Defaults to 1.0.
         eval (str, optional): Evaluation type. Defaults to "PUCT".
     Returns:
         policy (torch.Tensor)
         sampled_node (MCTSNode)
     """
+    if not rollout and net is None:
+        raise ValueError("Rollout is set to false but no network was provided")
 
     def backpropagate(leaf_node: MCTSNode):
         """
-        Backpropagates up the tree after reaching leaf node
+        Backpropagates up the tree after reaching leaf node.
+
         Args:
-            leaf_node (MCTSNode): Leaf node to backpropagate from
+        leaf_node (MCTSNode): Leaf node to backpropagate from
         """
         if not rollout:
             _, v_leaf = leaf_node.calc_policy_value(
@@ -212,8 +251,8 @@ def mcts(
             current = current.parent
 
     def forward(root_node: MCTSNode):
-        """
-        Runs a forward pass through the tree and then backpropagates back through the tree
+        """Run a forward pass through the tree and then backpropagates back through the tree.
+
         Args:
             root_node (MCTSNode): Root node to start from
         """
@@ -232,7 +271,9 @@ def mcts(
 
     for _ in range(n_iter):
         forward(start_node)
+
     policy_count = torch.LongTensor([child.n_visit for child in start_node.children])
+
     sampled_node = start_node.children[
         torch.multinomial(torch.pow(policy_count, (1 / temperature)).float(), 1).item()
     ]
@@ -242,41 +283,3 @@ def mcts(
         sum([child.action * child.n_visit for child in start_node.children]),
         sampled_node,
     )
-
-
-def self_play(
-    game: GameClassType, net: torch.nn.Module, n_mcts_iter: int = 1600,
-) -> List[tuple]:
-    pos = game.get_init_board()
-    temperature = 0.0001
-    data = []
-    is_terminal, res = game.is_terminal(pos)
-    node = MCTSNode(state=pos)
-    while not is_terminal:
-        policy, node = mcts(
-            start_node=node,
-            game=game,
-            net=net,
-            n_iter=n_mcts_iter,
-            temperature=temperature,
-        )
-        data.append((pos, policy))
-        pos = game.make_move(pos, node.action)
-        is_terminal, res = game.is_terminal(pos)
-        # TODO: Currently does not add last state (when game ends, no moves available) to datapoints, should it? Also look into stopping thresholds and resigning
-    data = [row + (res,) for row in data]
-
-    return data
-
-
-# def play_games(
-#    game: Game,
-#    net: torch.nn.Module,
-#    n_mcts_iter: int = 1600,
-#    n_games_thread=2500,
-#    threads=4,
-# ):
-#    # Arg games/thread instead?
-#    def play_games_thread():
-#        data = []
-#        for i in range(n_games_thread):
