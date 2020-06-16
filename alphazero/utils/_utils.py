@@ -13,7 +13,8 @@ def sample_tensor_indices(
 
     Args:
     tensor (torch.Tensor): Tensor to be sampled
-    n_samples (int, optional): How many samples (no replacement). Defaults to 1.
+    n_samples (int, optional): How many samples (no replacement).
+    Defaults to 1.
 
     Returns:
     List[tuple]: List of sampled indices

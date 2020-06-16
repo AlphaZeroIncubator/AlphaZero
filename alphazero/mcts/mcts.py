@@ -76,7 +76,9 @@ class MCTSNode:
             player = (player + 1) % n_players
         # Should probably update below logic in game class, cu
         return (
-            game.result(state) if self.root_player == 0 else -game.result(state)
+            game.result(state)
+            if self.root_player == 0
+            else -game.result(state)
         )
 
     def calc_policy_value(

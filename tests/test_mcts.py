@@ -7,7 +7,9 @@ class TestMCTS:
     def test_tictactoe_first_step(self):
         policy, _ = mcts(
             start_node=MCTSNode(
-                state=TicTacToe.get_initial_board(3, 3), player=0, root_player=0
+                state=TicTacToe.get_initial_board(3, 3),
+                player=0,
+                root_player=0,
             ),
             rollout=True,
             game=TicTacToe,
