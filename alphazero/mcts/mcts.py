@@ -20,6 +20,7 @@ class MCTSNode:
         self,
         state: torch.Tensor,
         player: int = 0,
+        root_player: int = 0,
         prior: float = 0,
         action: torch.Tensor = torch.Tensor([]),
     ):
@@ -27,9 +28,9 @@ class MCTSNode:
 
         Args:
             state (torch.Tensor): Board state for node
-            prior (float, optional): Prior for selecting this action/node 
+            prior (float, optional): Prior for selecting this action/node
             from parent. Defaults to 0.
-            action (torch.Tensor, optional): Action from parent to this node. 
+            action (torch.Tensor, optional): Action from parent to this node.
             Defaults to torch.Tensor([]).
         """
         self._action = action
@@ -43,6 +44,7 @@ class MCTSNode:
         self.prior = prior
         self.parent = None
         self.player = player
+        self.root_player = root_player
 
     def add_child(self, child: MCTSNode):
         """Add a child to node instance.
@@ -56,7 +58,7 @@ class MCTSNode:
     def rollout(self, game: GameClassType) -> int:
         """Perform a rollout from self.
 
-        Perform a rollout from self, selecting random actions from a uniform 
+        Perform a rollout from self, selecting random actions from a uniform
         prior until game ends.
         Args:
         game (GameClassType): Game that is currently played
@@ -72,8 +74,10 @@ class MCTSNode:
             action = sample_tensor_indices(legal_actions, 1)[0]
             state = game.board_after_move(state, player, action)
             player = (player + 1) % n_players
-        # Should probably update below logic in game class
-        return game.result(state) if self.player == 0 else -game.result(state)
+        # Should probably update below logic in game class, cu
+        return (
+            game.result(state) if self.root_player == 0 else -game.result(state)
+        )
 
     def calc_policy_value(
         self,
@@ -122,6 +126,7 @@ class MCTSNode:
                 player=(self.player + 1) % n_players,
                 action=action,
                 prior=prior,
+                root_player=self.root_player,
             )
             self.add_child(child)
 
@@ -206,6 +211,8 @@ class MCTSNode:
         """
         return self.u_value(sum_n, c_puct) + self.q_value
 
+    # Make root function here (delete parent tree, set root_player to player)
+
 
 def mcts(
     start_node: MCTSNode,
@@ -223,13 +230,13 @@ def mcts(
     Args:
         start_node (MCTSNode): Node to search from
         game (GameClassType): Game that is played
-        rollout (bool, optional): Whether the search uses rollout instead of 
+        rollout (bool, optional): Whether the search uses rollout instead of
         a network. Defaults to False.
         net (torch.nn.Module, optional): Needs to be input if rollout = false
         n_iter (int, optional): How many iterations to run Defaults to 1600.
-        c_puct (float, optional): c_puct value for node evaluation. 
+        c_puct (float, optional): c_puct value for node evaluation.
         Defaults to 1.0.
-        temperature (float, optional): Temperature for policy calculation. 
+        temperature (float, optional): Temperature for policy calculation.
         Defaults to 1.0.
         eval (str, optional): Evaluation type. Defaults to "PUCT".
     Returns:
@@ -265,7 +272,7 @@ def mcts(
     def forward(root_node: MCTSNode):
         """Run a forward pass through the tree.
 
-        Run a forward pass through the tree and then backpropagates 
+        Run a forward pass through the tree and then backpropagates
         back through the tree.
         Args:
         root_node (MCTSNode): Root node to start from
@@ -276,7 +283,7 @@ def mcts(
             current = current.children[
                 np.argmax(
                     [
-                        child.confidence_bound(sum_n=sum_n, c_puct=c_puct)
+                        child.puct(sum_n=sum_n, c_puct=c_puct)
                         for child in current.children
                     ]
                 )

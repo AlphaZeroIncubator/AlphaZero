@@ -1,6 +1,4 @@
 #! /usr/bin/python3
-import pytest
-
 from alphazero import AlphaGoZeroLoss
 import torch
 from alphazero.utils import sample_tensor_indices
