@@ -102,7 +102,7 @@ class PolicyHead(nn.Module):
         game,
         activation=nn.ReLU(inplace=False),
         batch_on=True,
-        pass_move=True,
+        pass_move=False,
     ):
 
         super(PolicyHead, self).__init__()
@@ -110,16 +110,18 @@ class PolicyHead(nn.Module):
             enc_channels, out_channels=2, kernel_size=1, stride=1
         )
         self.policybn = nn.BatchNorm2d(2) if batch_on else None
-        self.poss_moves = game.width * game.height
 
-        if pass_move:
+        self.game_width = game.width
+        self.game_height = game.height
+        self.board_pos = game.width * game.height
+        self.pass_move = pass_move
+        if self.pass_move:
             self.policyfc = nn.Linear(
-                in_features=self.poss_moves * 2,
-                out_features=self.poss_moves + 1,
+                in_features=self.board_pos * 2, out_features=self.board_pos + 1,
             )
         else:
             self.policyfc = nn.Linear(
-                in_features=self.poss_moves * 2, out_features=self.poss_moves
+                in_features=self.board_pos * 2, out_features=self.board_pos
             )
         self.activation = activation
         self.logsoftmax = nn.LogSoftmax(dim=1)
@@ -129,10 +131,13 @@ class PolicyHead(nn.Module):
         if self.policybn is not None:
             policy = self.policybn(policy)
         policy = self.activation(policy)
-        policy = policy.view(-1, self.poss_moves * 2)
+        policy = policy.view(-1, self.board_pos * 2)
         policy = self.policyfc(policy)
         probas = self.logsoftmax(policy).exp()
-        return probas
+        if self.pass_move:
+            return probas
+        else:
+            return probas.view(self.game_width, self.game_height)
 
 
 class ValueHead(nn.Module):
@@ -156,12 +161,11 @@ class ValueHead(nn.Module):
             enc_channels, out_channels=1, kernel_size=1, stride=1
         )
         self.valuebn = nn.BatchNorm2d(1) if batch_on else None
-        self.game_area = game.width * game.height
+        self.board_pos = game.width * game.height
         # figuring out what the in_channel should be for this
-        self.valuefc1 = nn.Linear(in_features=self.game_area, out_features=256)
+        self.valuefc1 = nn.Linear(in_features=self.board_pos, out_features=256)
         self.valuefc2 = nn.Linear(in_features=256, out_features=1)
         self.activation = activation
-
         self.tanh = nn.Tanh()
 
     def forward(self, encoding):
@@ -169,7 +173,7 @@ class ValueHead(nn.Module):
         if self.valuebn is not None:
             value = self.valuebn(value)
         value = self.activation(value)
-        value = value.view(-1, self.game_area)
+        value = value.view(-1, self.board_pos)
         value = self.valuefc1(value)
         value = self.activation(value)
         value = self.valuefc2(value)
