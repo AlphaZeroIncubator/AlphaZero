@@ -5,19 +5,19 @@ class ResidualBlock(nn.Module):
     def __init__(
         self,
         in_channels: int,
-        out_channels: int,
+        enc_channels: int,
         activation=nn.ReLU(inplace=False),
         batch_on=True,
     ):
         super(ResidualBlock, self).__init__()
         self.conv1 = nn.Conv2d(
-            in_channels, out_channels, kernel_size=3, stride=1, padding=1
+            in_channels, enc_channels, kernel_size=3, stride=1, padding=1
         )
         self.conv2 = nn.Conv2d(
-            in_channels, out_channels, kernel_size=3, stride=1, padding=1
+            in_channels, enc_channels, kernel_size=3, stride=1, padding=1
         )
-        self.bn1 = nn.BatchNorm2d(out_channels) if batch_on else None
-        self.bn2 = nn.BatchNorm2d(out_channels) if batch_on else None
+        self.bn1 = nn.BatchNorm2d(enc_channels) if batch_on else None
+        self.bn2 = nn.BatchNorm2d(enc_channels) if batch_on else None
         self.activation = activation
 
     def forward(self, x):
@@ -117,7 +117,8 @@ class PolicyHead(nn.Module):
         self.pass_move = pass_move
         if self.pass_move:
             self.policyfc = nn.Linear(
-                in_features=self.board_pos * 2, out_features=self.board_pos + 1,
+                in_features=self.board_pos * 2,
+                out_features=self.board_pos + 1,
             )
         else:
             self.policyfc = nn.Linear(
