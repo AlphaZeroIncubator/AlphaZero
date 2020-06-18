@@ -204,9 +204,10 @@ class TicTacToe(Game):
                 f"invalid move {move}: space already occupied in board {board}"
             )
 
-        board[move] = player
+        new_board = board.clone()
+        new_board[move] = player
 
-        return board
+        return new_board
 
     @staticmethod
     def get_initial_board(width=3, height=3):
@@ -237,11 +238,11 @@ class TicTacToe(Game):
 
     @staticmethod
     def get_game_status(board) -> tuple:
-        verts_0 = any((board == 0).sum(axis=0) == 3)
-        horizontals_0 = any((board == 0).sum(axis=1) == 3)
+        verts_0 = any((board == 0).sum(dim=0) == 3)
+        horizontals_0 = any((board == 0).sum(dim=1) == 3)
 
-        verts_1 = any((board == 1).sum(axis=0) == 3)
-        horizontals_1 = any((board == 1).sum(axis=1) == 3)
+        verts_1 = any((board == 1).sum(dim=0) == 3)
+        horizontals_1 = any((board == 1).sum(dim=1) == 3)
 
         n = board.shape[0]
 
@@ -271,10 +272,7 @@ class TicTacToe(Game):
         just return a boolean True/False.
         """
 
-        if any(TicTacToe.get_game_status(board)):
-            return True
-        # implicit else
-        return False
+        return not TicTacToe.result(board) is None
 
     @staticmethod
     def result(board) -> Union[None, int]:

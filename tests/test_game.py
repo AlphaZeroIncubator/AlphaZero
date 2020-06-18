@@ -287,5 +287,10 @@ class Test_TicTacToe:
 
         assert torch.all(ttt.board_state.eq(ttt_json.board_state))
 
+    def test_tie_board_is_game_over(self):
+        board = torch.Tensor([[1, 0, 1], [1, 0, 1], [0, 1, 0]])
+
+        assert TicTacToe.is_game_over(board) is True
+
     def test_n_players(self):
         assert TicTacToe.n_players() == 2

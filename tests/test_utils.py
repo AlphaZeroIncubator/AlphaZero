@@ -2,6 +2,15 @@
 
 from alphazero import AlphaGoZeroLoss
 import torch
+from alphazero.utils import sample_tensor_indices
+
+
+class TestUtils:
+    def test_sampling(self):
+        tensor = torch.zeros((3, 4, 5))
+        tensor[1, 2, 3] = 1
+        res = sample_tensor_indices(tensor, 1)
+        assert res[0] == (1, 2, 3)
 
 
 class Test_Loss:
