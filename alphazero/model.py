@@ -16,8 +16,8 @@ class ResidualBlock(nn.Module):
         self.conv2 = nn.Conv2d(
             in_channels, enc_channels, kernel_size=3, stride=1, padding=1
         )
-        self.bn1 = nn.BatchNorm2d(enc_channels) if batch_on else None
-        self.bn2 = nn.BatchNorm2d(enc_channels) if batch_on else None
+        self.bn1 = nn.BatchNorm2d(enc_channels) if batch_on else nn.Identity()
+        self.bn2 = nn.BatchNorm2d(enc_channels) if batch_on else nn.Identity()
         self.activation = activation
 
     def forward(self, x):
@@ -28,14 +28,14 @@ class ResidualBlock(nn.Module):
         residual = x
         # first convolution
         out = self.conv1(x)
-        if self.bn1 is not None:
-            out = self.bn1(out)
+
+        out = self.bn1(out)
         out = self.activation(out)
 
         # second convolution, add input after batchnorm step
         out = self.conv2(out)
-        if self.bn2 is not None:
-            out = self.bn2(out)
+
+        out = self.bn2(out)
         out += residual
         out = self.activation(out)
 
@@ -64,7 +64,7 @@ class SidNet(nn.Module):
         self.conv1 = nn.Conv2d(
             in_channels, enc_channels, kernel_size=3, stride=1, padding=1
         )
-        self.bn = nn.BatchNorm2d(enc_channels) if batch_on else None
+        self.bn = nn.BatchNorm2d(enc_channels) if batch_on else nn.Identity()
         self.resblock = self.make_layer(block, enc_channels, num_blocks)
         self.activation = activation
 
@@ -78,8 +78,7 @@ class SidNet(nn.Module):
     def forward(self, x):
 
         encoding = self.conv1(x)
-        if self.bn is not None:
-            encoding = self.bn(encoding)
+        encoding = self.bn(encoding)
         encoding = self.activation(encoding)
         encoding = self.resblock(encoding)
 
@@ -109,7 +108,7 @@ class PolicyHead(nn.Module):
         self.policyconv = nn.Conv2d(
             enc_channels, out_channels=2, kernel_size=1, stride=1
         )
-        self.policybn = nn.BatchNorm2d(2) if batch_on else None
+        self.policybn = nn.BatchNorm2d(2) if batch_on else nn.Identity()
 
         self.game_width = game.width
         self.game_height = game.height
@@ -129,8 +128,7 @@ class PolicyHead(nn.Module):
 
     def forward(self, encoding):
         policy = self.policyconv(encoding)
-        if self.policybn is not None:
-            policy = self.policybn(policy)
+        policy = self.policybn(policy)
         policy = self.activation(policy)
         policy = policy.view(-1, self.board_pos * 2)
         policy = self.policyfc(policy)
@@ -161,7 +159,7 @@ class ValueHead(nn.Module):
         self.valueconv = nn.Conv2d(
             enc_channels, out_channels=1, kernel_size=1, stride=1
         )
-        self.valuebn = nn.BatchNorm2d(1) if batch_on else None
+        self.valuebn = nn.BatchNorm2d(1) if batch_on else nn.Identity()
         self.board_pos = game.width * game.height
         # figuring out what the in_channel should be for this
         self.valuefc1 = nn.Linear(in_features=self.board_pos, out_features=256)
@@ -171,8 +169,7 @@ class ValueHead(nn.Module):
 
     def forward(self, encoding):
         value = self.valueconv(encoding)
-        if self.valuebn is not None:
-            value = self.valuebn(value)
+        value = self.valuebn(value)
         value = self.activation(value)
         value = value.view(-1, self.board_pos)
         value = self.valuefc1(value)
