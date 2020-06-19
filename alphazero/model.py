@@ -114,15 +114,11 @@ class PolicyHead(nn.Module):
         self.game_height = game.height
         self.board_pos = game.width * game.height
         self.pass_move = pass_move
-        if self.pass_move:
-            self.policyfc = nn.Linear(
-                in_features=self.board_pos * 2,
-                out_features=self.board_pos + 1,
-            )
-        else:
-            self.policyfc = nn.Linear(
-                in_features=self.board_pos * 2, out_features=self.board_pos
-            )
+        self.policyfc = nn.Linear(
+            in_features=self.board_pos * 2,
+            out_features=self.board_pos + self.pass_move,
+        )
+
         self.activation = activation
         self.logsoftmax = nn.LogSoftmax(dim=1)
 
