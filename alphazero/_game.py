@@ -271,8 +271,11 @@ class TicTacToe(Game):
         Check if the board state represents a game that is over. This should
         just return a boolean True/False.
         """
-
-        return not TicTacToe.result(board) is None
+        result = TicTacToe.result(board)
+        if result is None:
+            return False
+        # implicit else
+        return True
 
     @staticmethod
     def result(board) -> Union[None, int]:
