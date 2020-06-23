@@ -181,7 +181,7 @@ class ValueHead(nn.Module):
         return win_value
 
 
-class FinalNet(nn.module):
+class FinalNet(nn.Module):
     """
     Applies consolidates all the networks into one.
     """
