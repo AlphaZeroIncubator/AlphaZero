@@ -181,9 +181,17 @@ class ValueHead(nn.Module):
         return win_value
 
 
-class FinalNet(nn.Module):
+class PhilipNet(nn.Module):
     """
-    Applies consolidates all the networks into one.
+    Applies consolidates all the networks into one. Takes into account
+        game: game being played
+        block: type of Block being used(ResidualBlock)
+        num_block: int for number of blocks in network
+        in_channels: number of game states being loaded
+        enc_channels: number of channels in hidden layers for residual block
+        activation: activation function
+        batch_on: turns on or off batch_norm
+        pass_move: whether the game into consideration has a pass move
     """
 
     def __init__(
@@ -198,7 +206,7 @@ class FinalNet(nn.Module):
         pass_move=False,
     ):
 
-        super(FinalNet, self).__init__()
+        super(PhilipNet, self).__init__()
         self.EncodingNet = SidNet(
             block, in_channels, enc_channels, num_blocks, activation, batch_on
         )
