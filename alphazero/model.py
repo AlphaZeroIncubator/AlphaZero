@@ -183,7 +183,7 @@ class ValueHead(nn.Module):
 
 class PhilipNet(nn.Module):
     """
-    Applies consolidates all the networks into one. Takes into account
+    Consolidates all the networks into one. Takes into account
         game: game being played
         block: type of Block being used(ResidualBlock)
         num_block: int for number of blocks in network
