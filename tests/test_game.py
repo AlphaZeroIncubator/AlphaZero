@@ -172,10 +172,10 @@ class Test_TicTacToe:
 
         draw = torch.Tensor([[0, 1, 0], [1, 0, 0], [1, 0, 1]])
 
-        assert TicTacToe.result(self.dummy_tensor) is None
-        assert TicTacToe.result(board) == 1
-        assert TicTacToe.result(board_2) == -1
-        assert TicTacToe.result(draw) == 0
+        assert TicTacToe.result(self.dummy_tensor, 0) is None
+        assert TicTacToe.result(board, 0) == 1
+        assert TicTacToe.result(board_2, 0) == -1
+        assert TicTacToe.result(draw, 0) == 0
 
     def test_width(self):
         assert self.ttt.width == 3
