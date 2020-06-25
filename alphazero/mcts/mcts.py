@@ -362,6 +362,7 @@ def self_play(
             dirichlet_eps=dirichlet_eps,
             dirichlet_conc=dirichlet_conc,
         )
+        node.parent = None  # Make new node root, keep sub-tree information
         data.append((pos, policy, player))
         pos = game.board_after_move(
             pos, player, tuple(node.action.nonzero()[0])
