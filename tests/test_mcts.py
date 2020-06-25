@@ -23,7 +23,7 @@ class TestMCTS:
         def dummy_net(inp):
             return torch.ones(3, 3) / 9, torch.tensor(0)
 
-        policy, _ = mcts(
+        mcts(
             start_node=MCTSNode(
                 state=TicTacToe.get_initial_board(3, 3), player=0,
             ),
@@ -39,4 +39,4 @@ class TestMCTS:
         def dummy_net(inp):
             return torch.ones(3, 3) / 9, torch.tensor(0)
 
-        data = self_play(game=TicTacToe, net=dummy_net)
+        self_play(game=TicTacToe, net=dummy_net)
