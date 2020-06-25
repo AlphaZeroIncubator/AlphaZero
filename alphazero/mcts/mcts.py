@@ -10,7 +10,7 @@ import numpy as np
 import torch
 
 
-GameClassType = TypeVar("T", bound="Game")
+GameClassType = TypeVar("GameClassType", bound="Game")
 
 
 class MCTSNode:
@@ -20,7 +20,6 @@ class MCTSNode:
         self,
         state: torch.Tensor,
         player: int = 0,
-        root_player: int = 0,
         prior: float = 0,
         action: torch.Tensor = torch.Tensor([]),
     ):
@@ -44,7 +43,6 @@ class MCTSNode:
         self.prior = prior
         self.parent = None
         self.player = player
-        self.root_player = root_player
 
     def add_child(self, child: MCTSNode):
         """Add a child to node instance.
@@ -74,12 +72,9 @@ class MCTSNode:
             action = sample_tensor_indices(legal_actions, 1)[0]
             state = game.board_after_move(state, player, action)
             player = (player + 1) % n_players
-        # Should probably update below logic in game class, cu
-        return (
-            game.result(state)
-            if self.root_player == 0
-            else -game.result(state)
-        )
+        # Should probably update below logic in game class,
+        # result should take in player as well
+        return game.result(state, player), player
 
     def calc_policy_value(
         self,
@@ -101,15 +96,24 @@ class MCTSNode:
             value (float): The calculated value
         """
         if not rollout:
-            # TODO: Normalize probabilities after filter legal actions
-            self._policy, self._value = network(self._state)
+            policy, value = network(self._state)
+            policy = policy * game.get_legal_moves(self._state).float()
+            policy = policy / policy.sum()
+            self._policy, self._value = policy, value.item()
         else:
-            self._value = self.rollout(game)
+            value, val_player = self.rollout(game)
+            node_value = value if val_player == self.player else -value
+            self._value = node_value
             policy = game.get_legal_moves(self._state)
             self._policy = policy.float() / policy.sum()
         return self._policy, self._value
 
-    def expand(self, game: GameClassType):
+    def expand(
+        self,
+        game: GameClassType,
+        dirichlet_eps: float = 0.25,
+        dirichlet_conc: float = 0.03,
+    ):
         """Expand node.
 
         Args:
@@ -117,10 +121,17 @@ class MCTSNode:
         """
         n_players = game.n_players()
         legal_actions = game.get_legal_moves(self._state)
-        for index in legal_actions.nonzero():
+        if self.is_root:
+            n = legal_actions.sum().item()
+            dir_noise = np.random.dirichlet(dirichlet_conc * np.ones(n), 1)[0]
+        for i, index in enumerate(legal_actions.nonzero()):
             action = torch.zeros(legal_actions.size())
             action[tuple(index)] = 1
             prior = self._policy[tuple(index)].item()
+            if self.is_root:
+                prior = (
+                    prior * (1 - dirichlet_eps) + dirichlet_eps * dir_noise[i]
+                )
             child = MCTSNode(
                 state=game.board_after_move(
                     self._state, self.player, tuple(index)
@@ -128,7 +139,6 @@ class MCTSNode:
                 player=(self.player + 1) % n_players,
                 action=action,
                 prior=prior,
-                root_player=self.root_player,
             )
             self.add_child(child)
 
@@ -189,7 +199,7 @@ class MCTSNode:
         """
         return self.parent is None
 
-    def u_value(self, sum_n: int, c_puct: float = 1.0):
+    def u_value(self, c_puct: float = 1.0):
         """Calculate U for the puct calculation.
 
         Args:
@@ -199,9 +209,14 @@ class MCTSNode:
         Returns:
             float: U value
         """
-        return c_puct * self.prior * np.sqrt(sum_n) / (1 + self.n_visit)
+        return (
+            c_puct
+            * self.prior
+            * np.sqrt(self.parent.n_visit)
+            / (1 + self.n_visit)
+        )
 
-    def puct(self, sum_n: int, c_puct: float = 1.0):
+    def puct(self, c_puct: float = 1.0):
         """Calculate puct for the mcts.
 
         Args:
@@ -211,9 +226,9 @@ class MCTSNode:
         Returns:
             float: puct value
         """
-        return self.u_value(sum_n, c_puct) + self.q_value
+        return self.u_value(c_puct) - self.q_value
 
-    # Make root function here (delete parent tree, set root_player to player)
+    # Make root function here (delete parent tree)
 
 
 def mcts(
@@ -224,6 +239,8 @@ def mcts(
     n_iter: int = 1600,
     c_puct: float = 1.0,
     temperature: float = 1.0,
+    dirichlet_eps: float = 0.25,
+    dirichlet_conc: float = 1.0
     # eval_func: str = "PUCT",
 ) -> (torch.Tensor, MCTSNode):
     # TODO USE EVAL VARIABLE
@@ -257,18 +274,24 @@ def mcts(
         """
         if not rollout:
             _, v_leaf = leaf_node.calc_policy_value(
-                rollout=rollout, network=net
+                rollout=rollout, network=net, game=game
             )  # Think about batching/efficiency
         else:
             _, v_leaf = leaf_node.calc_policy_value(rollout=rollout, game=game)
-
+        leaf_player = leaf_node.player
         leaf_node.is_terminal = game.is_game_over(leaf_node.state)
         if not leaf_node.is_terminal:
-            leaf_node.expand(game)
+            leaf_node.expand(
+                game,
+                dirichlet_eps=dirichlet_eps,
+                dirichlet_conc=dirichlet_conc,
+            )
         current = leaf_node
-        while not current.is_root:
+        while current is not None:
             current.n_visit += 1
-            current.total_value += v_leaf
+            current.total_value += (
+                v_leaf if current.player == leaf_player else -v_leaf
+            )
             current = current.parent
 
     def forward(root_node: MCTSNode):
@@ -281,13 +304,9 @@ def mcts(
         """
         current = root_node
         while not current.is_leaf and not current.is_terminal:
-            sum_n = np.sum([child.n_visit for child in current.children])
             current = current.children[
                 np.argmax(
-                    [
-                        child.puct(sum_n=sum_n, c_puct=c_puct)
-                        for child in current.children
-                    ]
+                    [child.puct(c_puct=c_puct) for child in current.children]
                 )
             ]
         backpropagate(current)
@@ -307,7 +326,51 @@ def mcts(
     # TODO Maybe just iterate through children once, more efficient?
     # Currently doing it twice due to output difference,
     # just do forloop instead?
+    # This can def be optimized better
     return (
-        sum([child.action * child.n_visit for child in start_node.children]),
+        torch.pow(
+            sum(
+                [child.action * child.n_visit for child in start_node.children]
+            ),
+            (1 / temperature),
+        ),
         sampled_node,
     )
+
+
+def self_play(
+    game: GameClassType,
+    net: torch.nn.Module,
+    n_mcts_iter: int = 1600,
+    temperature: float = 1.0,
+    dirichlet_eps: float = 0.25,
+    dirichlet_conc: float = 1.0,
+) -> List[tuple]:
+    pos = game.get_initial_board()
+    data = []
+    is_terminal = game.is_game_over(pos)
+    player = 0
+    node = MCTSNode(state=pos, player=player)
+    n_players = game.n_players()
+    while not is_terminal:
+        policy, node = mcts(
+            start_node=node,
+            game=game,
+            net=net,
+            n_iter=n_mcts_iter,
+            temperature=temperature,
+            dirichlet_eps=dirichlet_eps,
+            dirichlet_conc=dirichlet_conc,
+        )
+        data.append((pos, policy, player))
+        pos = game.board_after_move(
+            pos, player, tuple(node.action.nonzero()[0])
+        )
+        player = (player + 1) % n_players
+        is_terminal = game.is_game_over(pos)
+        # TODO: Currently does not add last state (when game ends, no moves
+        # available) to datapoints,
+        # should it? Also look into stopping thresholds and resigning
+    res = game.result(pos, player)
+
+    return [row[0:2] + (res if row[2] == player else -res,) for row in data]
