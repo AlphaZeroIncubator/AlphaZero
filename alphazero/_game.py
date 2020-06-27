@@ -480,6 +480,8 @@ class Connect4(Game):
 
     @staticmethod
     def get_game_status(board) -> tuple:
+
+        # Need to change this to check if 4 pieces are in a row.
         verts_0 = any((board == 0).sum(dim=0) == 4)
         horizontals_0 = any((board == 0).sum(dim=1) == 4)
 
@@ -487,6 +489,8 @@ class Connect4(Game):
         horizontals_1 = any((board == 1).sum(dim=1) == 4)
 
         n = board.shape[1]
+
+        # get list of all possible diagonal wins on a 6 by 7 board
         diag_down = []
         diag_up = []
 
@@ -507,19 +511,22 @@ class Connect4(Game):
         diag_0 = []
         diag_1 = []
 
-        for i in range(n):
-            diag_0.append(sum(diag_down[i] == 0))
-            diag_0.append(sum(diag_up[i] == 0))
-            diag_1.append(sum(diag_down[i] == 1))
-            diag_1.append(sum(diag_up[i] == 1))
+        for i in diag_down:
+            temp_0 = [j == 0 for j in i]
+            temp_1 = [m == 1 for m in i]
+
+            for k in range(len(i) - 3):
+                # check every subarray of length 4 to if there are 4 connected
+                diag_0.append(sum(temp_0[k : k + 4]))
+                diag_1.append(sum(temp_1[k : k + 4]))
 
         return (
             verts_0,
             horizontals_0,
-            any(diag_0),
+            diag_0 == 4,
             verts_1,
             horizontals_1,
-            any(diag_1),
+            diag_1 == 4,
         )
 
     @staticmethod
@@ -528,7 +535,7 @@ class Connect4(Game):
         Check if the board state represents a game that is over. This should
         just return a boolean True/False.
         """
-        result = TicTacToe.result(board)
+        result = Connect4.result(board)
         if result is None:
             return False
         # implicit else
@@ -542,7 +549,7 @@ class Connect4(Game):
         None for undetermined, when the game is not over yet.
         """
 
-        status = TicTacToe.get_game_status(board)
+        status = Connect4.get_game_status(board)
         zero_win = any(status[:3])
         one_win = any(status[3:])
 
