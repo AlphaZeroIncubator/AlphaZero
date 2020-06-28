@@ -1,16 +1,19 @@
 """Functions and classes for MCTS implementation."""
 from __future__ import annotations
 
-from typing import List, TypeVar
+from typing import List, TypeVar, Tuple
 
 from alphazero.utils import sample_tensor_indices
+
+from alphazero import BoardConverter, Game
 
 import numpy as np
 
 import torch
 
-
 GameClassType = TypeVar("GameClassType", bound="Game")
+
+BoardConverterType = TypeVar("BoardConverterType", bound="BoardConverter")
 
 
 class MCTSNode:
@@ -21,7 +24,7 @@ class MCTSNode:
         state: torch.Tensor,
         player: int = 0,
         prior: float = 0,
-        action: torch.Tensor = torch.Tensor([]),
+        action: torch.Tensor = None,
     ):
         """Create an MCTSNode.
 
@@ -80,6 +83,7 @@ class MCTSNode:
         self,
         rollout: bool,
         game: GameClassType,
+        board_converter: BoardConverterType = None,
         network: torch.nn.Module = None,
     ) -> (torch.Tensor, float):
         """Calculate the policy and value for the node.
@@ -89,6 +93,8 @@ class MCTSNode:
         Args:
         rollout (bool): Whether to perform a rollout or not
         game (GameClassType): Game that is played
+        board_converter (BoardConverterType): Class for converting board state 
+        to input tensor
         network (torch.nn.Module, optional): Must be set if rollout is false
 
         Returns:
@@ -96,7 +102,9 @@ class MCTSNode:
             value (float): The calculated value
         """
         if not rollout:
-            policy, value = network(self._state)
+            policy, value = network(
+                board_converter.board_to_tensor(self._state, self.player)
+            )
             policy = policy * game.get_legal_moves(self._state).float()
             policy = policy / policy.sum()
             self._policy, self._value = policy, value.item()
@@ -234,6 +242,7 @@ class MCTSNode:
 def mcts(
     start_node: MCTSNode,
     game: GameClassType,
+    board_converter: BoardConverterType = None,
     rollout=False,
     net: torch.nn.Module = None,
     n_iter: int = 1600,
@@ -242,13 +251,15 @@ def mcts(
     dirichlet_eps: float = 0.25,
     dirichlet_conc: float = 1.0
     # eval_func: str = "PUCT",
-) -> (torch.Tensor, MCTSNode):
+) -> Tuple[torch.Tensor, MCTSNode]:
     # TODO USE EVAL VARIABLE
     """Run mcts search from start node.
 
     Args:
         start_node (MCTSNode): Node to search from
         game (GameClassType): Game that is played
+        board_converter (BoardConverterType): Class to convert board state to 
+        neural net input
         rollout (bool, optional): Whether the search uses rollout instead of
         a network. Defaults to False.
         net (torch.nn.Module, optional): Needs to be input if rollout = false
@@ -257,7 +268,12 @@ def mcts(
         Defaults to 1.0.
         temperature (float, optional): Temperature for policy calculation.
         Defaults to 1.0.
+        dirichlet_eps (float, optional): Dirichlet noise epsilon. 
+        Defaults to 0.25.
+        dirichlet_conc (float, optional): Dirichlet noise concentration. 
+        Defaults to 1.0.
         eval (str, optional): Evaluation type. Defaults to "PUCT".
+
     Returns:
         policy (torch.Tensor)
         sampled_node (MCTSNode)
@@ -274,7 +290,10 @@ def mcts(
         """
         if not rollout:
             _, v_leaf = leaf_node.calc_policy_value(
-                rollout=rollout, network=net, game=game
+                rollout=rollout,
+                network=net,
+                game=game,
+                board_converter=board_converter,
             )  # Think about batching/efficiency
         else:
             _, v_leaf = leaf_node.calc_policy_value(rollout=rollout, game=game)
@@ -341,11 +360,31 @@ def mcts(
 def self_play(
     game: GameClassType,
     net: torch.nn.Module,
+    board_converter: BoardConverterType,
     n_mcts_iter: int = 1600,
     temperature: float = 1.0,
     dirichlet_eps: float = 0.25,
     dirichlet_conc: float = 1.0,
 ) -> List[tuple]:
+    """Plays games with itself
+
+    Args:
+        game (GameClassType): The game class for the model
+        net (torch.nn.Module): The model network
+        board_converter (BoardConverterType, optional): Converts board state 
+        to input tensor.
+        n_mcts_iter (int, optional): Number of mcts iterations. 
+        Defaults to 1600.
+        temperature (float, optional): Temperature for probability calculation. 
+        Defaults to 1.0.
+        dirichlet_eps (float, optional): Dirichlet noise epsilon. 
+        Defaults to 0.25.
+        dirichlet_conc (float, optional): Dirichlet noise concentration. 
+        Defaults to 1.0.
+
+    Returns:
+        List[tuple]: [description]
+    """
     pos = game.get_initial_board()
     data = []
     is_terminal = game.is_game_over(pos)
@@ -356,6 +395,7 @@ def self_play(
         policy, node = mcts(
             start_node=node,
             game=game,
+            board_converter=board_converter,
             net=net,
             n_iter=n_mcts_iter,
             temperature=temperature,
@@ -364,14 +404,10 @@ def self_play(
         )
         node.parent = None  # Make new node root, keep sub-tree information
         data.append((pos, policy, player))
-        pos = game.board_after_move(
-            pos, player, tuple(node.action.nonzero()[0])
-        )
+        pos = node.state
         player = (player + 1) % n_players
-        is_terminal = game.is_game_over(pos)
-        # TODO: Currently does not add last state (when game ends, no moves
-        # available) to datapoints,
-        # should it? Also look into stopping thresholds and resigning
+        is_terminal = node.is_terminal
+        # TODO: Look into stopping thresholds and resigning
     res = game.result(pos, player)
 
     return [row[0:2] + (res if row[2] == player else -res,) for row in data]
