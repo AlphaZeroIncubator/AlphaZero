@@ -65,14 +65,20 @@ class SidNet(nn.Module):
             in_channels, enc_channels, kernel_size=3, stride=1, padding=1
         )
         self.bn = nn.BatchNorm2d(enc_channels) if batch_on else nn.Identity()
-        self.resblock = self.make_layer(block, enc_channels, num_blocks)
+        self.resblock = self.make_layer(
+            block, enc_channels, num_blocks, activation, batch_on
+        )
         self.activation = activation
 
-    def make_layer(self, block, out_channels, num_blocks):
+    def make_layer(
+        self, block, out_channels, num_blocks, activation, batch_on
+    ):
 
         layers = []
         for i in range(0, num_blocks):
-            layers.append(block(out_channels, out_channels))
+            layers.append(
+                block(out_channels, out_channels, activation, batch_on)
+            )
         return nn.Sequential(*layers)
 
     def forward(self, x):
@@ -173,3 +179,46 @@ class ValueHead(nn.Module):
         value = self.valuefc2(value)
         win_value = self.tanh(value)
         return win_value
+
+
+class PhilipNet(nn.Module):
+    """
+    Consolidates all the networks into one. Takes into account
+        game: game being played
+        block: type of Block being used(ResidualBlock)
+        num_block: int for number of blocks in network
+        in_channels: number of game states being loaded
+        enc_channels: number of channels in hidden layers for residual block
+        activation: activation function
+        batch_on: turns on or off batch_norm
+        pass_move: whether the game into consideration has a pass move
+    """
+
+    def __init__(
+        self,
+        game,
+        block,
+        num_blocks,
+        in_channels,
+        enc_channels=256,
+        activation=nn.ReLU(inplace=False),
+        batch_on=True,
+        pass_move=False,
+    ):
+
+        super(PhilipNet, self).__init__()
+        self.EncodingNet = SidNet(
+            block, in_channels, enc_channels, num_blocks, activation, batch_on
+        )
+        self.PolicyNet = PolicyHead(
+            enc_channels, game, activation, batch_on, pass_move
+        )
+        self.ValueNet = ValueHead(enc_channels, game, activation, batch_on)
+
+    def forward(self, x):
+
+        encoding = self.EncodingNet(x)
+        policy = self.PolicyNet(encoding)
+        value = self.ValueNet(encoding)
+
+        return policy, value
