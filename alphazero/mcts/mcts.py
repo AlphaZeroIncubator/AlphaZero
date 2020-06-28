@@ -5,7 +5,7 @@ from typing import List, TypeVar, Tuple
 
 from alphazero.utils import sample_tensor_indices
 
-from alphazero import BoardConverter, Game
+from alphazero import BoardConverter, Game  # noqa
 
 import numpy as np
 
@@ -93,7 +93,7 @@ class MCTSNode:
         Args:
         rollout (bool): Whether to perform a rollout or not
         game (GameClassType): Game that is played
-        board_converter (BoardConverterType): Class for converting board state 
+        board_converter (BoardConverterType): Class for converting board state
         to input tensor
         network (torch.nn.Module, optional): Must be set if rollout is false
 
@@ -258,7 +258,7 @@ def mcts(
     Args:
         start_node (MCTSNode): Node to search from
         game (GameClassType): Game that is played
-        board_converter (BoardConverterType): Class to convert board state to 
+        board_converter (BoardConverterType): Class to convert board state to
         neural net input
         rollout (bool, optional): Whether the search uses rollout instead of
         a network. Defaults to False.
@@ -268,9 +268,9 @@ def mcts(
         Defaults to 1.0.
         temperature (float, optional): Temperature for policy calculation.
         Defaults to 1.0.
-        dirichlet_eps (float, optional): Dirichlet noise epsilon. 
+        dirichlet_eps (float, optional): Dirichlet noise epsilon.
         Defaults to 0.25.
-        dirichlet_conc (float, optional): Dirichlet noise concentration. 
+        dirichlet_conc (float, optional): Dirichlet noise concentration.
         Defaults to 1.0.
         eval (str, optional): Evaluation type. Defaults to "PUCT".
 
@@ -371,15 +371,15 @@ def self_play(
     Args:
         game (GameClassType): The game class for the model
         net (torch.nn.Module): The model network
-        board_converter (BoardConverterType, optional): Converts board state 
+        board_converter (BoardConverterType, optional): Converts board state
         to input tensor.
-        n_mcts_iter (int, optional): Number of mcts iterations. 
+        n_mcts_iter (int, optional): Number of mcts iterations.
         Defaults to 1600.
-        temperature (float, optional): Temperature for probability calculation. 
+        temperature (float, optional): Temperature for probability calculation.
         Defaults to 1.0.
-        dirichlet_eps (float, optional): Dirichlet noise epsilon. 
+        dirichlet_eps (float, optional): Dirichlet noise epsilon.
         Defaults to 0.25.
-        dirichlet_conc (float, optional): Dirichlet noise concentration. 
+        dirichlet_conc (float, optional): Dirichlet noise concentration.
         Defaults to 1.0.
 
     Returns:
