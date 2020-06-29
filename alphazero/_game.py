@@ -480,54 +480,75 @@ class Connect4(Game):
 
     @staticmethod
     def get_game_status(board) -> tuple:
-
-        # Need to change this to check if 4 pieces are in a row.
-        verts_0 = any((board == 0).sum(dim=0) == 4)
-        horizontals_0 = any((board == 0).sum(dim=1) == 4)
-
-        verts_1 = any((board == 1).sum(dim=0) == 4)
-        horizontals_1 = any((board == 1).sum(dim=1) == 4)
-
+        """
+        Checks to see if any player has reached Victory. Stores all the
+        columns, rows, and diagonals of the tensor in a list of lists,
+        and then checks every subarray to see if there are 4 pieces in a
+        row. Currently works for square boards and long boards.
+        Tall boards currently working on.
+        """
+        possible_rows = []
+        m = board.shape[0]
         n = board.shape[1]
 
-        # get list of all possible diagonal wins on a 6 by 7 board
-        diag_down = []
-        diag_up = []
+        for i in range(m):
+            possible_rows.append(board[i, :].tolist())
 
-        diag_down.append([board[i + 2, i].item() for i in range(n - 2)])
-        diag_down.append([board[i + 1, i].item() for i in range(n - 1)])
-        diag_down.append([board[i, i].item() for i in range(n)])
-        diag_down.append([board[i, i + 1].item() for i in range(n)])
-        diag_down.append([board[i, i + 2].item() for i in range(n - 1)])
-        diag_down.append([board[i, i + 3].item() for i in range(n - 2)])
+        for i in range(n):
+            possible_rows.append(board[:, i].tolist())
 
-        diag_up.append([board[n - 3 - i, i].item() for i in range(n - 2)])
-        diag_up.append([board[n - 2 - i, i].item() for i in range(n - 1)])
-        diag_up.append([board[n - 1 - i, i].item() for i in range(n)])
-        diag_up.append([board[n - 1 - i, i + 1].item() for i in range(n)])
-        diag_up.append([board[n - 1 - i, i + 2].item() for i in range(n - 1)])
-        diag_up.append([board[n - 1 - i, i + 3].item() for i in range(n - 2)])
+        # h_index starts incrementing once you reach the base
+        h_index = 0
+        for i in range(2 * min(m, n) - 7 + abs(m - n)):
 
-        diag_0 = []
-        diag_1 = []
+            if m <= n:
 
-        for i in diag_down:
+                if 4 + i < m:
+                    possible_rows.append(
+                        [board[3 + i - j, j].item() for j in range(4 + i)]
+                    )
+                    possible_rows.append(
+                        [board[m - 4 - i + j, j].item() for j in range(4 + i)]
+                    )
+                elif (4 + i) >= m and 4 + i <= n:
+                    possible_rows.append(
+                        [
+                            board[m - 1 - j, j + h_index].item()
+                            for j in range(m)
+                        ]
+                    )
+                    possible_rows.append(
+                        [board[j, j + h_index].item() for j in range(m)]
+                    )
+                    h_index += 1
+                elif 4 + i > n:
+                    possible_rows.append(
+                        [
+                            board[m - 1 - j, j + h_index].item()
+                            for j in range(max(4, n - h_index))
+                        ]
+                    )
+                    possible_rows.append(
+                        [
+                            board[j, j + h_index].item()
+                            for j in range(max(4, n - h_index))
+                        ]
+                    )
+                    h_index += 1
+
+        check_0_win = []
+        check_1_win = []
+
+        for i in possible_rows:
             temp_0 = [j == 0 for j in i]
             temp_1 = [m == 1 for m in i]
 
             for k in range(len(i) - 3):
                 # check every subarray of length 4 to if there are 4 connected
-                diag_0.append(sum(temp_0[k : k + 4]))
-                diag_1.append(sum(temp_1[k : k + 4]))
+                check_0_win.append(sum(temp_0[k : k + 4]))
+                check_1_win.append(sum(temp_1[k : k + 4]))
 
-        return (
-            verts_0,
-            horizontals_0,
-            diag_0 == 4,
-            verts_1,
-            horizontals_1,
-            diag_1 == 4,
-        )
+        return (4 in check_0_win, 4 in check_1_win)
 
     @staticmethod
     def is_game_over(board) -> bool:
