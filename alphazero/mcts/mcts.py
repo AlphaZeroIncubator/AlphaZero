@@ -11,6 +11,8 @@ import numpy as np
 
 import torch
 
+from collections import namedtuple
+
 GameClassType = TypeVar("GameClassType", bound="Game")
 
 BoardConverterType = TypeVar("BoardConverterType", bound="BoardConverter")
@@ -75,8 +77,7 @@ class MCTSNode:
             action = sample_tensor_indices(legal_actions, 1)[0]
             state = game.board_after_move(state, player, action)
             player = (player + 1) % n_players
-        # Should probably update below logic in game class,
-        # result should take in player as well
+
         return game.result(state, player), player
 
     def calc_policy_value(
@@ -366,7 +367,7 @@ def self_play(
     dirichlet_eps: float = 0.25,
     dirichlet_conc: float = 1.0,
 ) -> List[tuple]:
-    """Plays games with itself
+    """Plays games with itself.
 
     Args:
         game (GameClassType): The game class for the model
@@ -383,8 +384,11 @@ def self_play(
         Defaults to 1.0.
 
     Returns:
-        List[tuple]: [description]
+        List[tuple]: List of data point tuples (pos, policy, result)
     """
+
+    SelfPlayPoint = namedtuple("SelfPlayPoint", "pos policy player")
+
     pos = game.get_initial_board()
     data = []
     is_terminal = game.is_game_over(pos)
@@ -403,11 +407,18 @@ def self_play(
             dirichlet_conc=dirichlet_conc,
         )
         node.parent = None  # Make new node root, keep sub-tree information
-        data.append((pos, policy, player))
+        data.append(SelfPlayPoint(pos, policy, player))
         pos = node.state
         player = (player + 1) % n_players
         is_terminal = node.is_terminal
         # TODO: Look into stopping thresholds and resigning
     res = game.result(pos, player)
 
-    return [row[0:2] + (res if row[2] == player else -res,) for row in data]
+    # Returns (pos, policy, res) tuples in list.
+    # res is flipped if game result was computed
+    # from opponents point of view
+    return [
+        (row.pos, row.policy) + (res if row.player == player else -res,)
+        for row in data
+    ]
+
