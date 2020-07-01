@@ -34,7 +34,7 @@ class TestMCTS:
             c_puct=5.0,
         )
 
-    def test_self_play(self):
+    def test_self_play_runs(self):
         # Just check that it runs for now
 
         ttt_instance = TicTacToe(3, 3)
