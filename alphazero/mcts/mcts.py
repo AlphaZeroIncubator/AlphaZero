@@ -421,4 +421,3 @@ def self_play(
         (row.pos, row.policy) + (res if row.player == player else -res,)
         for row in data
     ]
-
