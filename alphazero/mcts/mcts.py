@@ -372,7 +372,7 @@ def self_play(
     Args:
         game (GameClassType): The game class for the model
         net (torch.nn.Module): The model network
-        board_converter (BoardConverterType, optional): Converts board state
+        board_converter (BoardConverterType): Converts board state
         to input tensor.
         n_mcts_iter (int, optional): Number of mcts iterations.
         Defaults to 1600.
