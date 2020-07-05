@@ -66,10 +66,13 @@ def train(
     game,
     model,
     optimizer,
+    board_converter,
     n_games=1000,
     subset_size=1000,
     n_mcts_iter=1600,
     temperature=1e-4,
+    dirichlet_eps=0.25,
+    dirichlet_conc=1.0,
     device=torch.device("cpu"),
     n_test_games=9,
 ):
@@ -79,7 +82,13 @@ def train(
     for i in range(n_games):
         data.append(
             self_play(
-                game, model, n_mcts_iter=n_mcts_iter, temperature=temperature
+                game,
+                model,
+                board_converter=board_converter,
+                n_mcts_iter=n_mcts_iter,
+                temperature=temperature,
+                dirichlet_eps=dirichlet_eps,
+                dirichlet_conc=dirichlet_conc,
             )
         )
 
@@ -92,7 +101,11 @@ def train(
     model.train()
     for idx, (pos, policy, res) in enumerate(subset):
         # send to device
-        pos, policy, res = pos.to(device), policy.to(device), res.to(device)
+        pos, policy, res = (
+            pos.to(device),
+            policy.to(device),
+            res.to(device),
+        )
 
         optimizer.zero_grad()
 
@@ -120,6 +133,8 @@ def test(game_type, model_1, model_2, n_games=9, device=torch.device("cpu")):
 
     for game in range(n_games):
         tally += play_game(game_type, model_1, model_2, device)
+
+    print(f"New model against old model tally: {tally}")
 
     if tally > 0:
         return model_1
