@@ -197,9 +197,9 @@ class PhilipNet(nn.Module):
     def __init__(
         self,
         game,
-        block,
-        num_blocks,
-        in_channels,
+        block=ResidualBlock,
+        num_blocks=40,
+        in_channels=1,
         enc_channels=256,
         activation=nn.ReLU(inplace=False),
         batch_on=True,
