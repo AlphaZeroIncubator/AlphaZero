@@ -1,8 +1,7 @@
 import numpy as np
 import torch
-import torch.nn as nn
-from alphazero import load_board
 from alphazero.mcts import self_play
+from alphazero.utils import AlphaGoZeroLoss
 from copy import deepcopy
 
 
