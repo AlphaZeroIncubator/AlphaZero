@@ -1,8 +1,7 @@
 #! /usr/bin/python3
 
-from alphazero import AlphaGoZeroLoss
 import torch
-from alphazero.utils import sample_tensor_indices
+from alphazero.utils import sample_tensor_indices, AlphaGoZeroLoss
 
 
 class TestUtils:

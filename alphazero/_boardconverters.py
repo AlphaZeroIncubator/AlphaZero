@@ -12,7 +12,7 @@ class BoardConverter:
             that can be input into a model.
         Args:
             board (torch.Tensor): Input board
-            current_player (int): [description]
+            current_player (int): The player whose turn it is
 
         Returns:
             tensor (torch.Tensor): Output tensor
