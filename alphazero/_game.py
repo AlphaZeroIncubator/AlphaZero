@@ -403,7 +403,7 @@ class Connect4(Game):
         self._move_count = 0
         self._players = [0, 1]
 
-    def make_move(self, move: (int, int)):
+    def make_move(self, move: int):
         """
         Make a move on the board. Should be a valid move and return a valid
         game board.
@@ -417,35 +417,29 @@ class Connect4(Game):
             raise ValueError(f"Board state {self._board} is not valid.")
 
     @staticmethod
-    def board_after_move(board, player: int, move: (int, int)):
+    def board_after_move(board, player: int, move: int):
         """
         Make a move on the board and return it. Does not affect any instances
         of the class. Should be a valid move and return a valid game board.
         """
-        if not isinstance(move, tuple):
-            raise TypeError(f"move is of type {type(move)} but must be tuple")
-        if not len(move) == 2:
-            raise ValueError(f"move is of length {len(move)} but must be 3")
+        if not isinstance(move, int):
+            raise TypeError(f"move is of type {type(move)} but must be an int")
 
         if player not in (0, 1):
             raise ValueError(f"invalid player for move {move}")
 
-        if (
-            move[0] > board.shape[0]
-            or move[1] > board.shape[1]
-            or any([m < 0 for m in move[1:]])
-        ):
+        if any((board[:, move] == -1)) is False:
+            raise ValueError(f"Column is full")
+        if move > board.shape[0]:
             raise IndexError(
                 f"invalid move {move} for board shaped {board.shape}"
             )
 
-        if board[move] != -1:
-            raise ValueError(
-                f"invalid move {move}: space already occupied in board {board}"
-            )
-
+        row_index = (
+            board.shape[0] - 1 - (board[:, move]).tolist()[::-1].index(-1)
+        )
         new_board = board.clone()
-        new_board[move] = player
+        new_board[row_index, move] = player
 
         return new_board
 
@@ -569,8 +563,8 @@ class Connect4(Game):
         """
 
         status = Connect4.get_game_status(board)
-        zero_win = any(status[:3])
-        one_win = any(status[3:])
+        zero_win = any(status[0])
+        one_win = any(status[1])
 
         if zero_win:
             result = 1
