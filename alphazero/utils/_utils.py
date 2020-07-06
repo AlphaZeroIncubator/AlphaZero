@@ -49,4 +49,3 @@ def AlphaGoZeroLoss(
     q_value = output[1]
 
     return mse(policy_true, policy) + ratio * ce(q_true, q_value)
-
