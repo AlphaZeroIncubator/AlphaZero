@@ -32,4 +32,3 @@ class SelfPlayDataset(torch.utils.data.Dataset):
             sample = self.transform(sample)
 
         return sample
-
