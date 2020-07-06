@@ -1,65 +1,9 @@
-#! /usr/bin/python3
-
-import os
 import numpy as np
 import torch
 import torch.nn as nn
-from .storage import load_board
-from .mcts import self_play
+from alphazero import load_board
+from alphazero.mcts import self_play
 from copy import deepcopy
-
-
-def AlphaGoZeroLoss(
-    ground_truth: (torch.Tensor, torch.Tensor),
-    output: (torch.Tensor, torch.Tensor),
-    ratio: float = 1.0,
-):
-    """
-    Calculates AlphaGoZero style loss.
-    L2 regularization is included in the optimizer and would be very slow to
-    compute here, since it would require unpacking the parameters of the NN
-    at every step. So we're using it there instead.
-    """
-
-    mse = nn.MSELoss()
-    ce = nn.CrossEntropyLoss()
-
-    policy_true = ground_truth[0]
-    q_true = ground_truth[1]
-
-    policy = output[0]
-    q_value = output[1]
-
-    return mse(policy_true, policy) + ratio * ce(q_true, q_value)
-
-
-class SelfPlayDataset(torch.utils.data.Dataset):
-    # untested
-    def __init__(self, game, root_dir, transform):
-        self.game = game
-        self.root_dir = root_dir
-        self.transform = transform
-
-    def __len__(self):
-        return sum(
-            [
-                len(os.listdir(directory))
-                for directory in os.listdir(self.root_dir)
-            ]
-        )
-
-    def __getitem__(self, idx):
-
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-
-        sample_loc = os.path.join(self.root_dir, idx[0])
-        sample = load_board(self.game, sample_loc)
-
-        if self.transform:
-            sample = self.transform(sample)
-
-        return sample
 
 
 def train(
