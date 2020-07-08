@@ -383,3 +383,269 @@ class TicTacToe(Game):
         Get the number of players in the game.
         """
         return 2
+
+
+class Connect4(Game):
+    def __init__(self, width=7, height=6, board_state=None):
+        """
+        Construct an instance of the game class.
+        """
+        if board_state is None:
+            self._board = self.get_initial_board(width, height)
+        else:
+            tensor = torch.Tensor(board_state)
+            if width * height != tensor.numel():
+                raise ValueError(
+                    f"width and height dimensions {width}, {height} do not "
+                    f"match board state size {tensor.shape}"
+                )
+            self._board = tensor.view(width, height)
+        self._move_count = 0
+        self._players = [0, 1]
+
+    def make_move(self, move: int):
+        """
+        Make a move on the board. Should be a valid move and return a valid
+        game board.
+        """
+        self._board = self.board_after_move(
+            self._board, self._players[self._move_count % 2], move
+        )
+        self._move_count += 1
+
+        if not self.is_valid():
+            raise ValueError(f"Board state {self._board} is not valid.")
+
+    @staticmethod
+    def board_after_move(board, player: int, move: int):
+        """
+        Make a move on the board and return it. Does not affect any instances
+        of the class. Should be a valid move and return a valid game board.
+        """
+        if not isinstance(move, int):
+            raise TypeError(f"move is of type {type(move)} but must be an int")
+
+        if player not in (0, 1):
+            raise ValueError(f"invalid player for move {move}")
+
+        if any((board[:, move] == -1)) is False:
+            raise ValueError(f"Column is full")
+        if move > board.shape[0]:
+            raise IndexError(
+                f"invalid move {move} for board shaped {board.shape}"
+            )
+
+        row_index = (
+            board.shape[0] - 1 - (board[:, move]).tolist()[::-1].index(-1)
+        )
+        new_board = board.clone()
+        new_board[row_index, move] = player
+
+        return new_board
+
+    @staticmethod
+    def get_initial_board(width=7, height=6):
+        """
+        Get the initial game board for this game. For Connect 4, for instance,
+        this should be an empty board of width `width` and height `height`, but
+        for chess this may be the initial position of the pieces.
+        """
+        return torch.full((width, height), -1)
+
+    @staticmethod
+    def get_legal_moves(board) -> torch.Tensor:
+        """
+        Get a list of legal moves for the given board game position. Should
+        return a `torch.Tensor` full of booleans that represent whether a move
+        is valid or not. Does not affect internal state of any instances of
+        this class.
+        """
+        return board == -1
+
+    def current_legal_moves(self) -> torch.Tensor:
+        """
+        Get a dynamic list of legal moves for the current game position. Should
+        return a `torch.Tensor` full of booleans that represent whether a move
+        is valid or not.
+        """
+        return self.get_legal_moves(self._board)
+
+    @staticmethod
+    def get_game_status(board) -> tuple:
+        """
+        Checks to see if any player has reached Victory. Stores all the
+        columns, rows, and diagonals of the tensor in a list of lists,
+        and then checks every subarray to see if there are 4 pieces in a
+        row. Currently works for square boards and long boards.
+        Tall boards currently working on.
+        """
+        possible_rows = []
+        m = board.shape[0]
+        n = board.shape[1]
+
+        for i in range(m):
+            possible_rows.append(board[i, :].tolist())
+
+        for i in range(n):
+            possible_rows.append(board[:, i].tolist())
+
+        # h_index starts incrementing once you reach the base
+        h_index = 0
+        for i in range(2 * min(m, n) - 7 + abs(m - n)):
+
+            if m <= n:
+
+                if 4 + i < m:
+                    possible_rows.append(
+                        [board[3 + i - j, j].item() for j in range(4 + i)]
+                    )
+                    possible_rows.append(
+                        [board[m - 4 - i + j, j].item() for j in range(4 + i)]
+                    )
+                elif (4 + i) >= m and 4 + i <= n:
+                    possible_rows.append(
+                        [
+                            board[m - 1 - j, j + h_index].item()
+                            for j in range(m)
+                        ]
+                    )
+                    possible_rows.append(
+                        [board[j, j + h_index].item() for j in range(m)]
+                    )
+                    h_index += 1
+                elif 4 + i > n:
+                    possible_rows.append(
+                        [
+                            board[m - 1 - j, j + h_index].item()
+                            for j in range(max(4, n - h_index))
+                        ]
+                    )
+                    possible_rows.append(
+                        [
+                            board[j, j + h_index].item()
+                            for j in range(max(4, n - h_index))
+                        ]
+                    )
+                    h_index += 1
+
+        check_0_win = []
+        check_1_win = []
+
+        for i in possible_rows:
+            temp_0 = [j == 0 for j in i]
+            temp_1 = [m == 1 for m in i]
+
+            for k in range(len(i) - 3):
+                # check every subarray of length 4 to if there are 4 connected
+                check_0_win.append(sum(temp_0[k : k + 4]))
+                check_1_win.append(sum(temp_1[k : k + 4]))
+
+        return (4 in check_0_win, 4 in check_1_win)
+
+    @staticmethod
+    def is_game_over(board) -> bool:
+        """
+        Check if the board state represents a game that is over. This should
+        just return a boolean True/False.
+        """
+        result = Connect4.result(board)
+        if result is None:
+            return False
+        # implicit else
+        return True
+
+    @staticmethod
+    def result(board) -> Union[None, int]:
+        """
+        Get the result of the game. This should be 1 for a win for the player
+        whose perspective we're looking for, 0 for a draw, -1 for a loss, or
+        None for undetermined, when the game is not over yet.
+        """
+
+        status = Connect4.get_game_status(board)
+        zero_win = any(status[0])
+        one_win = any(status[1])
+
+        if zero_win:
+            result = 1
+        elif one_win:
+            result = -1
+        elif torch.any(board.eq(-1)):
+            return None
+        else:
+            result = 0
+
+        return result
+
+    @property
+    def width(self) -> int:
+        """
+        Get the width of the game board. For tic-tac-toe, for instance, this
+        should return 3; for chess, 8.
+        """
+        return self._board.shape[0]
+
+    @property
+    def height(self) -> int:
+        """
+        Get the height of the game board. For tic-tac-toe, this should return
+        3; for chess, 8.
+        """
+        return self._board.shape[1]
+
+    @property
+    def board_state(self) -> torch.Tensor:
+        """
+        Get the current board state as a torch.Tensor.
+        """
+        return self._board
+
+    @classmethod
+    def from_json(cls, **params):
+        """
+        Create an instance of class `cls` starting from a JSON style dict
+        `params`. This dict should contain all the width, height, board state
+        parameters that may be needed to create an instance of this game class.
+        """
+        return cls(**params)
+
+    def reset(self) -> None:
+        """
+        Reset the game to the initial board position (as given by
+        `get_initial_board()`). Reset move lists, move counters, anything else.
+        """
+        self._board = self.get_initial_board()
+        self._move_count = 0
+        assert self.is_valid()
+
+    def is_valid(self) -> bool:
+        """
+        Check if the current board position is valid.
+        """
+        valid = True
+
+        zeroes = (self._board == 0).sum().item()
+        ones = (self._board == 1).sum().item()
+
+        if zeroes + ones != self._move_count:
+            valid = False
+
+        if abs(zeroes - ones) > 1:
+            valid = False
+
+        return valid
+
+    @staticmethod
+    def mirror_h(board):
+        """
+        Mirror the board position horizontally. Should be implemented per
+        subclass.
+        """
+        return board.flip(1)
+
+    @staticmethod
+    def n_players():
+        """
+        Get the number of players in the game.
+        """
+        return 2
