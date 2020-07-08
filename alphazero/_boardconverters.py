@@ -46,4 +46,8 @@ class LeoConverter(BoardConverter):
         player_2: torch.Tensor = board == 1 - current_player
         board_tensor = torch.stack((player_1.float(), player_2.float()))
         board_tensor.unsqueeze_(0)
+        # move tensor to cuda. 
+        # Todo: add a global 'device' parameter that indicate on which device (cpu/cuda)  
+        # inference is performed
+        board_tensor = board_tensor.half().to('cuda')
         return board_tensor
