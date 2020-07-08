@@ -16,11 +16,7 @@ game = TicTacToe()
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 model = PhilipNet(in_channels = 2, game = game, num_blocks = 10, enc_channels = 128)
-print('sending NN to GPU...')
 model.half().to(device)
-print('SENT !')
-
-# print(model(LeoConverter.board_to_tensor(game.board_state,1)))
 
 my_game = self_play(
         game,
