@@ -34,3 +34,16 @@ class TicTacToeConverter(BoardConverter):
         return torch.stack(
             (player_1.float(), player_2.float(), player_layer)
         ).unsqueeze(0)
+
+
+
+class LeoConverter(BoardConverter):
+    @staticmethod
+    def board_to_tensor(
+        board: torch.Tensor, current_player: int
+    ) -> torch.Tensor:
+        player_1: torch.Tensor = board == current_player
+        player_2: torch.Tensor = board == 1 - current_player
+        board_tensor = torch.stack((player_1.float(), player_2.float()))
+        board_tensor.unsqueeze_(0)
+        return board_tensor
