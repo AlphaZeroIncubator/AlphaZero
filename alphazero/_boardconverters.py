@@ -49,5 +49,5 @@ class LeoConverter(BoardConverter):
         # move tensor to cuda. 
         # Todo: add a global 'device' parameter that indicate on which device (cpu/cuda)  
         # inference is performed
-        board_tensor = board_tensor.half().to('cuda')
+        # board_tensor = board_tensor.half().to('cuda')
         return board_tensor

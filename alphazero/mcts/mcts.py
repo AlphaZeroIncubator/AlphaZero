@@ -103,12 +103,14 @@ class MCTSNode:
             value (float): The calculated value
         """
         if not rollout:
-            policy, value = network(
-                board_converter.board_to_tensor(self._state, self.player)
-            )
-            if policy.device == 'cuda':
-                policy = policy.to('cpu')
-                value = value.to('cpu')
+            # policy, value = network(
+                # board_converter.board_to_tensor(self._state, self.player)
+            # )
+            policy = torch.reshape(torch.from_numpy(np.random.dirichlet(np.ones(9), 1)[0]),(3,3))
+            value = torch.tensor(np.random.uniform(low=-1,high=1))
+            # if policy.device == 'cuda':
+                # policy = policy.to('cpu')
+                # value = value.to('cpu')
             policy = policy * game.get_legal_moves(self._state).float()
             policy = policy / policy.sum()
             self._policy, self._value = policy, value.item()
