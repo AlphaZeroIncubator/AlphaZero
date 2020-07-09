@@ -475,6 +475,61 @@ class Connect4(Game):
         return self.get_legal_moves(self._board)
 
     @staticmethod
+    def winning_move(board, col) -> bool:
+        """
+        Check if the last move on columns `col` lead to victory
+        """
+        height = board.shape[0]
+        width = board.shape[1]
+
+        row = height - 1
+        while row >= 0 and board[row, col] != -1:
+            row -= 1
+        row += 1
+        player = board[row, col]
+        if height - row >= 4:
+            # check vertically
+            r = row - 1
+            while r > height and board[r, col] == player:
+                r -= 1
+            if r - row >= 4:
+                return True
+
+        # check horizontally
+        c1 = col - 1
+        while c1 >= 0 and board[row, c1] == player:
+            c1 -= 1
+        c2 = col + 1
+        while c2 < width and board[row, c2] == player:
+            c2 += 1
+        if c2 - c1 > 4:
+            return True
+
+        # check first diagonal
+        d1 = 1
+        while row - d1 >= 0 and col - d1 >= 0 and board[row - d1, col - d1] == player:
+            d1 += 1
+        d2 = 1
+        while (
+            row + d2 < height and col + d2 < width and board[row + d2, col + d2] == player
+        ):
+            d2 += 1
+        if d2 + d1 > 4:
+            return True
+
+        # check second diagonal
+        d1 = 1
+        while row - d1 >= 0 and col + d1 < width and board[row - d1, col + d1] == player:
+            d1 += 1
+        d2 = 1
+        while row + d2 < height and col - d2 >= 0 and board[row + d2, col - d2] == player:
+            d2 += 1
+        if d2 + d1 > 4:
+            return True
+
+        return False
+    
+    @staticmethod
     def get_game_status(board) -> tuple:
         """
         Checks to see if any player has reached Victory. Stores all the
