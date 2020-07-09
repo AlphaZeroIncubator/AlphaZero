@@ -236,34 +236,38 @@ class TicTacToe(Game):
         """
         return self.get_legal_moves(self._board)
 
-    @staticmethod
-    def get_game_status(board) -> tuple:
-        verts_0 = any((board == 0).sum(dim=0) == 3)
-        horizontals_0 = any((board == 0).sum(dim=1) == 3)
+    # @staticmethod
+    # def get_game_status(board) -> tuple:
+        # b0 = (board == 0)
+        # b1 = (board == 1)
 
-        verts_1 = any((board == 1).sum(dim=0) == 3)
-        horizontals_1 = any((board == 1).sum(dim=1) == 3)
 
-        n = board.shape[0]
+        # verts_0 = any(b0.sum(dim=0) == 3)
+        # horizontals_0 = any(b0.sum(dim=1) == 3)
 
-        first_diag = [board[i, i].item() for i in range(n)]
+        # verts_1 = any(b1.sum(dim=0) == 3)
+        # horizontals_1 = any(b1.sum(dim=1) == 3)
 
-        first_diag_0 = all([d == 0 for d in first_diag])
-        first_diag_1 = all([d == 1 for d in first_diag])
+        # # n = board.shape[0]
 
-        second_diag = [board[i, n - i - 1] for i in range(n)]
+        # first_diag = [board[i, i].item() for i in range(3)]
 
-        second_diag_0 = all([d == 0 for d in second_diag])
-        second_diag_1 = all([d == 1 for d in second_diag])
+        # first_diag_0 = all([d == 0 for d in first_diag])
+        # first_diag_1 = all([d == 1 for d in first_diag])
 
-        return (
-            verts_0,
-            horizontals_0,
-            first_diag_0 or second_diag_0,
-            verts_1,
-            horizontals_1,
-            first_diag_1 or second_diag_1,
-        )
+        # second_diag = [board[i, 3 - i - 1] for i in range(3)]
+
+        # second_diag_0 = all([d == 0 for d in second_diag])
+        # second_diag_1 = all([d == 1 for d in second_diag])
+
+        # return (
+            # verts_0,
+            # horizontals_0,
+            # first_diag_0 or second_diag_0,
+            # verts_1,
+            # horizontals_1,
+            # first_diag_1 or second_diag_1,
+        # )
 
     @staticmethod
     def is_game_over(board) -> bool:
@@ -285,20 +289,23 @@ class TicTacToe(Game):
         None for undetermined, when the game is not over yet.
         """
 
-        status = TicTacToe.get_game_status(board)
-        zero_win = any(status[:3])
-        one_win = any(status[3:])
+        center = board[1,1]
+        if center != -1 and ((board[0,0] == center and board[2,2] == center) or (board[0,2] == center and board[2,0] == center) or (board[0,1] == center and board[2,1] == center) or (board[1,0] == center and board[1,2] == center)):
+            return 1 if player == center else -1
 
-        if zero_win:
-            result = 1 if player == 0 else -1
-        elif one_win:
-            result = 1 if player == 1 else -1
-        elif torch.any(board.eq(-1)):
+        topleft = board[0,0]
+        if topleft != -1 and ((board[0,1] == topleft and board[0,2] == topleft) or (board[1,0] == topleft and board[2,0] == topleft)):
+            return 1 if player == topleft else -1
+
+        bottomright = board[2,2]
+        if bottomright != -1 and ((board[2,1] == bottomright and board[2,0] == bottomright) or (board[1,2] == bottomright and board[0,2] == bottomright)):
+            return 1 if player == bottomright else -1
+
+        if torch.any(board.eq(-1)):
             return None
         else:
-            result = 0
+            return 0
 
-        return result
 
     @property
     def width(self) -> int:
