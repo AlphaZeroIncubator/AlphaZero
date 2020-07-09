@@ -437,9 +437,11 @@ class Connect4(Game):
                 f"invalid move {move} for board shaped {board.shape}"
             )
 
-        row_index = (
-            board.shape[0] - 1 - (board[:, move]).tolist()[::-1].index(-1)
-        )
+        row_index = height - 1
+        while row_index >= 0 and board[row_index, move] != -1:
+            row_index -= 1
+        row_index += 1
+
         new_board = board.clone()
         new_board[row_index, move] = player
 
