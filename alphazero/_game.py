@@ -437,7 +437,7 @@ class Connect4(Game):
                 f"invalid move {move} for board shaped {board.shape}"
             )
 
-        row_index = height - 1
+        row_index = board.shape[0] - 1
         while row_index >= 0 and board[row_index, move] != -1:
             row_index -= 1
         row_index += 1
@@ -464,7 +464,7 @@ class Connect4(Game):
         is valid or not. Does not affect internal state of any instances of
         this class.
         """
-        return board == -1
+        return board[0, :] == -1
 
     def current_legal_moves(self) -> torch.Tensor:
         """
@@ -507,11 +507,17 @@ class Connect4(Game):
 
         # check first diagonal
         d1 = 1
-        while row - d1 >= 0 and col - d1 >= 0 and board[row - d1, col - d1] == player:
+        while (
+            row - d1 >= 0
+            and col - d1 >= 0
+            and board[row - d1, col - d1] == player
+        ):
             d1 += 1
         d2 = 1
         while (
-            row + d2 < height and col + d2 < width and board[row + d2, col + d2] == player
+            row + d2 < height
+            and col + d2 < width
+            and board[row + d2, col + d2] == player
         ):
             d2 += 1
         if d2 + d1 > 4:
@@ -519,16 +525,24 @@ class Connect4(Game):
 
         # check second diagonal
         d1 = 1
-        while row - d1 >= 0 and col + d1 < width and board[row - d1, col + d1] == player:
+        while (
+            row - d1 >= 0
+            and col + d1 < width
+            and board[row - d1, col + d1] == player
+        ):
             d1 += 1
         d2 = 1
-        while row + d2 < height and col - d2 >= 0 and board[row + d2, col - d2] == player:
+        while (
+            row + d2 < height
+            and col - d2 >= 0
+            and board[row + d2, col - d2] == player
+        ):
             d2 += 1
         if d2 + d1 > 4:
             return True
 
         return False
-    
+
     @staticmethod
     def get_game_status(board) -> tuple:
         """
