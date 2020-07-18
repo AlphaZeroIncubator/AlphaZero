@@ -1,7 +1,9 @@
 import numpy as np
+import random
 import torch
 from alphazero.mcts import self_play
 from alphazero.utils import AlphaGoZeroLoss
+from alphazero import TicTacToeConverter
 from copy import deepcopy
 
 
@@ -23,7 +25,8 @@ def train(
     data = []
     # generate data through self-play with MCTS
     for i in range(n_games):
-        data.append(
+        print(f"Playing game {i + 1}/{n_games}")
+        data.extend(
             self_play(
                 game,
                 model,
@@ -35,14 +38,24 @@ def train(
             )
         )
 
+    print("Self play done, starting training")
+
     # train model on random positions from generated data
-    subset = np.random.choice(data, size=subset_size)
+    subset = random.sample(data, k=subset_size)
 
     old_model = deepcopy(model)
 
     model.to(device)
     model.train()
-    for idx, (pos, policy, res) in enumerate(subset):
+
+    total_loss = 0
+
+    for idx, (pos, policy, player, res) in enumerate(subset):
+
+        res = torch.Tensor([res])
+
+        pos = board_converter.board_to_tensor(pos, player)
+
         # send to device
         pos, policy, res = (
             pos.to(device),
@@ -57,25 +70,48 @@ def train(
         loss = AlphaGoZeroLoss((policy, res), output)
         loss.backward()
 
+        total_loss += loss.item()
+
         optimizer.step()
 
-        if idx % 100 == 0:
+        if idx % 1 == 0:
             print(
                 "  [{}/{} ({:.0f}%)]\tLoss: {:.6f}".format(
-                    idx, subset_size, 100.0 * idx / subset_size, loss.item()
+                    idx + 1,
+                    subset_size,
+                    100.0 * (idx + 1) / subset_size,
+                    total_loss,
                 )
             )
 
     # evaluate if model is better than old model (through self-play)
 
-    model = test(game, model, old_model, n_games=n_test_games, device=device)
+    model = test(
+        game,
+        board_converter,
+        model,
+        old_model,
+        n_games=n_test_games,
+        device=device,
+    )
+
+    return model
 
 
-def test(game_type, model_1, model_2, n_games=9, device=torch.device("cpu")):
+def test(
+    game_type,
+    board_converter,
+    model_1,
+    model_2,
+    n_games=9,
+    device=torch.device("cpu"),
+):
     tally = 0
 
     for game in range(n_games):
-        tally += play_game(game_type, model_1, model_2, device)
+        tally += play_game(
+            game_type, board_converter, model_1, model_2, device
+        )
 
     print(f"New model against old model tally: {tally}")
 
@@ -85,21 +121,34 @@ def test(game_type, model_1, model_2, n_games=9, device=torch.device("cpu")):
     return model_2
 
 
-def play_game(game_type, model_1, model_2, device=torch.device("cpu")):
+def play_game(
+    game_type, board_converter, model_1, model_2, device=torch.device("cpu")
+):
 
     game = game_type()
     model_1.to(device)
     model_2.to(device)
     current_player = model_1
 
+    i = 0
+
     while not game_type.is_game_over(game.board_state):
+
+        i += 1
+        i %= game_type.n_players()
         # play the moves individually
-        pos = game.board_state.to(device)
+        pos = board_converter.board_to_tensor(game.board_state, i)
+        pos = pos.to(device)
+
         moves, q = current_player(pos)
-        game.make_move(np.argmax(moves))
+        moves = moves * game.current_legal_moves().to(device)
+
+        best_move = np.argmax(moves.cpu().detach().numpy())
+        game.make_move((best_move // game.width, best_move % game.height))
 
         # i'm not confident this works since it relies on "is"
         current_player = model_2 if current_player is model_1 else model_1
 
+    print(game.board_state)
     # return the winner of the game
-    return game_type.result(game.board_state)
+    return game_type.result(game.board_state, 0)
