@@ -418,6 +418,7 @@ def self_play(
     # res is flipped if game result was computed
     # from opponents point of view
     return [
-        (row.pos, row.policy) + (res if row.player == player else -res,)
+        (row.pos, row.policy, row.player)
+        + (res if row.player == player else -res,)
         for row in data
     ]
