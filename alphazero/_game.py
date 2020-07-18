@@ -393,7 +393,7 @@ class Connect4(Game):
         Construct an instance of the game class.
         """
         if board_state is None:
-            self._board = self.get_initial_board(width, height)
+            self._board = self.get_initial_board(height, width)
         else:
             tensor = torch.Tensor(board_state)
             if width * height != tensor.numel():
@@ -401,9 +401,10 @@ class Connect4(Game):
                     f"width and height dimensions {width}, {height} do not "
                     f"match board state size {tensor.shape}"
                 )
-            self._board = tensor.view(width, height)
+            self._board = tensor.view(height, width)
         self._move_count = 0
         self._players = [0, 1]
+        self.win_list = [False, False]
 
     def make_move(self, move: int):
         """
@@ -440,7 +441,6 @@ class Connect4(Game):
         row_index = board.shape[0] - 1
         while row_index >= 0 and board[row_index, move] != -1:
             row_index -= 1
-        row_index += 1
 
         new_board = board.clone()
         new_board[row_index, move] = player
@@ -448,13 +448,13 @@ class Connect4(Game):
         return new_board
 
     @staticmethod
-    def get_initial_board(width=7, height=6):
+    def get_initial_board(height=6, width=7):
         """
         Get the initial game board for this game. For Connect 4, for instance,
         this should be an empty board of width `width` and height `height`, but
         for chess this may be the initial position of the pieces.
         """
-        return torch.full((width, height), -1)
+        return torch.full((height, width), -1)
 
     @staticmethod
     def get_legal_moves(board) -> torch.Tensor:
@@ -561,7 +561,6 @@ class Connect4(Game):
 
         for i in range(n):
             possible_rows.append(board[:, i].tolist())
-
         # h_index starts incrementing once you reach the base
         h_index = 0
         for i in range(2 * min(m, n) - 7 + abs(m - n)):
@@ -634,10 +633,10 @@ class Connect4(Game):
         whose perspective we're looking for, 0 for a draw, -1 for a loss, or
         None for undetermined, when the game is not over yet.
         """
-
         status = Connect4.get_game_status(board)
-        zero_win = any(status[0])
-        one_win = any(status[1])
+
+        zero_win = status[0]
+        one_win = status[1]
 
         if zero_win:
             result = 1
@@ -656,7 +655,7 @@ class Connect4(Game):
         Get the width of the game board. For tic-tac-toe, for instance, this
         should return 3; for chess, 8.
         """
-        return self._board.shape[0]
+        return self._board.shape[1]
 
     @property
     def height(self) -> int:
@@ -664,7 +663,7 @@ class Connect4(Game):
         Get the height of the game board. For tic-tac-toe, this should return
         3; for chess, 8.
         """
-        return self._board.shape[1]
+        return self._board.shape[0]
 
     @property
     def board_state(self) -> torch.Tensor:
