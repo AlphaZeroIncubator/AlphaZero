@@ -25,12 +25,15 @@ class TicTacToeConverter(BoardConverter):
     def board_to_tensor(
         board: torch.Tensor, current_player: int
     ) -> torch.Tensor:
+
         player_1: torch.Tensor = board == 0
         player_2: torch.Tensor = board == 1
+
         player_layer = torch.full(
             board.size(), current_player, dtype=torch.float
         )
-        print(torch.stack((player_1.float(), player_2.float(), player_layer)))
+
+        # return stacked: player_1, player_2, current_player layers
         return torch.stack(
             (player_1.float(), player_2.float(), player_layer)
         ).unsqueeze(0)
