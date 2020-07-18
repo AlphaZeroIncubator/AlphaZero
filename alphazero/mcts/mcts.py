@@ -340,7 +340,7 @@ def mcts(
 
     sampled_node = start_node.children[
         torch.multinomial(
-            torch.pow(policy_count, (1 / temperature)).float(), 1
+            torch.pow(policy_count, (1 / temperature)).clamp(0).float(), 1
         ).item()
     ]
     # TODO Maybe just iterate through children once, more efficient?
