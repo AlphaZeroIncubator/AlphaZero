@@ -43,9 +43,11 @@ def AlphaGoZeroLoss(
     ce = nn.CrossEntropyLoss()
 
     policy_true = ground_truth[0]
-    q_true = ground_truth[1]
+    q_true = ground_truth[1].flatten()
 
     policy = output[0]
-    q_value = output[1]
+    q_value = output[1].flatten()
 
-    return mse(policy_true, policy) + ratio * ce(q_true, q_value)
+    return ce(
+        policy.reshape(1, -1), policy_true.argmax().unsqueeze(0)
+    ) + ratio * mse(q_value, q_true)
