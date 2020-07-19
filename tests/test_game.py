@@ -420,6 +420,49 @@ class Test_Connect4:
 
         self.C4.reset()
 
+    def test_winning_move(self):
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [0, -1, -1, -1, -1, -1, -1],
+                [0, -1, -1, -1, -1, -1, -1],
+                [0, -1, -1, -1, -1, -1, -1],
+            ]
+        )
+        status = Connect4.winning_move(board, 0)
+
+        assert status == True
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [0, 0, 0, -1, -1, -1, -1],
+            ]
+        )
+        status = Connect4.winning_move(board, 3)
+
+        assert status == True
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, 0, 1, -1, -1, -1],
+                [-1, 0, 0, 1, -1, -1, -1],
+                [0, 1, 1, 1, -1, -1, -1],
+            ]
+        )
+        status = Connect4.winning_move(board, 3)
+
+        assert status == True
+
     def test_get_game_status(self):
         board = torch.Tensor(
             [

@@ -273,7 +273,6 @@ class TicTacToe(Game):
         """
         result = TicTacToe.result(board, 0)
 
-
         if result is None:
             return False
         # implicit else
@@ -484,7 +483,7 @@ class Connect4(Game):
         row = height - 1
         while row >= 0 and board[row, col] != -1:
             row -= 1
-        row += 1
+
         player = board[row, col]
         if height - row >= 4:
             # check vertically
@@ -713,6 +712,13 @@ class Connect4(Game):
         subclass.
         """
         return board.flip(1)
+
+    @staticmethod
+    def mirror_v(board):
+        """
+        Mirror the board vertically. Not implemented for Connect4.
+        """
+        raise NotImplementedError("Not Valid Operation for Connect4")
 
     @staticmethod
     def n_players():
