@@ -404,7 +404,6 @@ class Connect4(Game):
             self._board = tensor.view(height, width)
         self._move_count = 0
         self._players = [0, 1]
-        self.win_list = [False, False]
 
     def make_move(self, move: int):
         """
@@ -431,7 +430,7 @@ class Connect4(Game):
         if player not in (0, 1):
             raise ValueError(f"invalid player for move {move}")
 
-        if any((board[:, move] == -1)) is False:
+        if not any((board[:, move] == -1)):
             raise ValueError(f"Column is full")
         if move > board.shape[0]:
             raise IndexError(
