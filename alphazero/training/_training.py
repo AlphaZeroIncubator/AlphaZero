@@ -3,7 +3,6 @@ import random
 import torch
 from alphazero.mcts import self_play
 from alphazero.utils import AlphaGoZeroLoss
-from alphazero import TicTacToeConverter
 from copy import deepcopy
 
 
