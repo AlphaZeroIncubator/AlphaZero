@@ -89,7 +89,7 @@ class Test_TicTacToe:
         assert torch.all(board.eq(-1))
         assert board.shape == (3, 3)
 
-    def test_1(self):
+    def test_get_legal_moves(self):
         legal_moves = TicTacToe.get_legal_moves(self.dummy_tensor)
 
         assert torch.all(legal_moves.eq(self.dummy_tensor == -1))
@@ -252,17 +252,7 @@ class Test_TicTacToe:
         assert torch.all(ttt.board_state.eq(-1))
 
     def test_board_state_list_accepted(self):
-        board = [
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-        ]
+        board = [-1] * 9
 
         ttt = TicTacToe(board_state=board)
 
@@ -419,49 +409,6 @@ class Test_Connect4:
         self.C4.current_legal_moves()
 
         self.C4.reset()
-
-    def test_winning_move(self):
-        board = torch.Tensor(
-            [
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1],
-                [0, -1, -1, -1, -1, -1, -1],
-                [0, -1, -1, -1, -1, -1, -1],
-                [0, -1, -1, -1, -1, -1, -1],
-            ]
-        )
-        status = Connect4.winning_move(board, 0)
-
-        assert status == True
-
-        board = torch.Tensor(
-            [
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1],
-                [0, 0, 0, -1, -1, -1, -1],
-            ]
-        )
-        status = Connect4.winning_move(board, 3)
-
-        assert status == True
-
-        board = torch.Tensor(
-            [
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, -1, -1, -1, -1, -1],
-                [-1, -1, 0, 1, -1, -1, -1],
-                [-1, 0, 0, 1, -1, -1, -1],
-                [0, 1, 1, 1, -1, -1, -1],
-            ]
-        )
-        status = Connect4.winning_move(board, 3)
-
-        assert status == True
 
     def test_get_game_status(self):
         board = torch.Tensor(
@@ -651,7 +598,6 @@ class Test_Connect4:
         )
 
         status = Connect4.get_game_status(board)
-
         assert status == (False, True)
 
         board = torch.Tensor(
@@ -666,7 +612,6 @@ class Test_Connect4:
         )
 
         status = Connect4.get_game_status(board)
-
         assert status == (False, True)
 
         board = torch.Tensor(
@@ -681,7 +626,6 @@ class Test_Connect4:
         )
 
         status = Connect4.get_game_status(board)
-
         assert status == (False, True)
 
         board = torch.Tensor(
@@ -696,7 +640,6 @@ class Test_Connect4:
         )
 
         status = Connect4.get_game_status(board)
-
         assert status == (False, True)
 
         board = torch.Tensor(
@@ -711,7 +654,6 @@ class Test_Connect4:
         )
 
         status = Connect4.get_game_status(board)
-
         assert status == (False, True)
 
         board = torch.Tensor(
@@ -786,6 +728,164 @@ class Test_Connect4:
 
         status = Connect4.get_game_status(board)
         assert status == (True, True)
+
+        status = Connect4.get_game_status(self.dummy_tensor)
+        assert status == (False, False)
+
+        # test boards of dimensions 7*9, to try diff dimensions
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [1, -1, -1, -1, -1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (False, True)
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [1, 1, 1, 1, -1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (False, True)
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, 1, -1, -1, -1, -1, -1],
+                [-1, -1, 1, -1, -1, -1, -1, -1, -1],
+                [-1, 1, -1, -1, -1, -1, -1, -1, -1],
+                [1, -1, -1, -1, -1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (False, True)
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, 0, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, 0, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, 0, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, 0, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (True, False)
+
+        # try skinny boards(e.g. 8*5)
+
+        board = torch.Tensor(
+            [
+                [-1, 0, -1, -1, -1],
+                [-1, -1, 0, -1, -1],
+                [-1, -1, -1, 0, -1],
+                [-1, -1, -1, -1, 0],
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (True, False)
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1],
+                [-1, -1, 1, -1, -1],
+                [-1, -1, 1, -1, -1],
+                [-1, -1, 1, -1, -1],
+                [-1, -1, 1, -1, -1],
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (False, True)
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, 1, -1],
+                [-1, -1, 1, -1, -1],
+                [-1, 1, -1, -1, -1],
+                [1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (False, True)
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+                [0, 0, 0, 0, -1],
+                [-1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (True, False)
+
+        board = torch.Tensor(
+            [
+                [0, 0, 1, 0, 1, 0, 0],
+                [1, 1, 0, 0, 1, 1, 0],
+                [1, 1, 0, 1, 1, 1, 0],
+                [0, 1, 1, 1, 0, 1, 1],
+                [1, 0, 0, 0, 1, 0, 0],
+                [0, 0, 0, 1, 1, 1, 0],
+            ]
+        )
+        status = Connect4.get_game_status(board)
+        assert status == (False, False)
+
+        # try very long board
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+                [-1, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            ]
+        )
+
+        status = Connect4.get_game_status(board)
+        assert status == (True, False)
+
+        # try very skinny board
+        board = board.transpose(0, -1)
+        status = Connect4.get_game_status(board)
+        assert status == (True, False)
 
     def test_is_game_over(self):
         board = torch.Tensor(
@@ -904,6 +1004,21 @@ class Test_Connect4:
         )
 
         assert torch.all(Connect4.mirror_h(board).eq(mirrored))
+
+    def test_mirror_v(self):
+
+        board = torch.Tensor(
+            [
+                [-1, -1, -1, -1, -1, -1, -1],
+                [-1, -1, -1, -1, -1, -1, -1],
+                [0, -1, -1, -1, -1, -1, -1],
+                [0, -1, -1, -1, -1, -1, -1],
+                [0, -1, -1, -1, -1, -1, -1],
+                [0, -1, -1, -1, -1, -1, -1],
+            ]
+        )
+        with pytest.raises(NotImplementedError):
+            Connect4.mirror_v(board)
 
     def test_board_state_list_of_lists_accepted(self):
         board = torch.Tensor(
