@@ -401,7 +401,9 @@ class Connect4(Game):
                     f"match board state size {tensor.shape}"
                 )
             self._board = tensor.view(height, width)
-        self._move_count = 0
+        self._move_count = (self._board == 0).sum().item() + (
+            self._board == 1
+        ).sum().item()
         self._players = [0, 1]
 
     def make_move(self, move: int):
@@ -480,68 +482,109 @@ class Connect4(Game):
         and then checks every subarray to see if there are 4 pieces in a
         row. Works for all rectangular boards
         """
-        possible_rows = []
+
+        possible_rows_0 = []
+        possible_rows_1 = []
         m = board.shape[0]
         n = board.shape[1]
 
-        if n > m:
+        if n < m:
             board = board.transpose(-1, 0)
             m = board.shape[0]
             n = board.shape[1]
 
-        print(board)
         for i in range(m):
-            possible_rows.append(board[i, :].tolist())
+            possible_rows_0.append((board[i, :] == 0).tolist())
+            possible_rows_1.append((board[i, :] == 1).tolist())
 
         for i in range(n):
-            possible_rows.append(board[:, i].tolist())
+            possible_rows_0.append((board[:, i] == 0).tolist())
+            possible_rows_1.append((board[:, i] == 1).tolist())
 
         # h_index starts incrementing once you reach the base
         h_index = 0
         for i in range(2 * min(m, n) - 7 + abs(m - n)):
             if 4 + i < m:
-                possible_rows.append(
-                    [board[3 + i - j, j].item() for j in range(4 + i)]
+                # positive sloping diagonals
+                possible_rows_0.append(
+                    [board[3 + i - j, j].item() == 0 for j in range(4 + i)]
                 )
-                possible_rows.append(
-                    [board[m - 4 - i + j, j].item() for j in range(4 + i)]
+                possible_rows_1.append(
+                    [board[3 + i - j, j].item() == 1 for j in range(4 + i)]
+                )
+
+                # negative sloping diagonals
+                possible_rows_0.append(
+                    [board[m - 4 - i + j, j].item() == 0 for j in range(4 + i)]
+                )
+                possible_rows_1.append(
+                    [board[m - 4 - i + j, j].item() == 1 for j in range(4 + i)]
                 )
             elif (4 + i) >= m and 4 + i <= n:
-                possible_rows.append(
-                    [board[m - 1 - j, j + h_index].item() for j in range(m)]
+                # positive sloping diagonals
+                possible_rows_0.append(
+                    [
+                        board[m - 1 - j, j + h_index].item() == 0
+                        for j in range(m)
+                    ]
                 )
-                possible_rows.append(
-                    [board[j, j + h_index].item() for j in range(m)]
+                possible_rows_1.append(
+                    [
+                        board[m - 1 - j, j + h_index].item() == 1
+                        for j in range(m)
+                    ]
                 )
+
+                # negative sloping diagonals
+                possible_rows_0.append(
+                    [board[j, j + h_index].item() == 0 for j in range(m)]
+                )
+                possible_rows_1.append(
+                    [board[j, j + h_index].item() == 1 for j in range(m)]
+                )
+
                 h_index += 1
             elif 4 + i > n:
-                possible_rows.append(
+                # positive sloping diags
+                possible_rows_0.append(
                     [
-                        board[m - 1 - j, j + h_index].item()
+                        board[m - 1 - j, j + h_index].item() == 0
                         for j in range(max(4, n - h_index))
                     ]
                 )
-                possible_rows.append(
+                possible_rows_1.append(
                     [
-                        board[j, j + h_index].item()
+                        board[m - 1 - j, j + h_index].item() == 1
+                        for j in range(max(4, n - h_index))
+                    ]
+                )
+                # negative sloping diags
+                possible_rows_0.append(
+                    [
+                        board[j, j + h_index].item() == 0
+                        for j in range(max(4, n - h_index))
+                    ]
+                )
+
+                possible_rows_1.append(
+                    [
+                        board[j, j + h_index].item() == 1
                         for j in range(max(4, n - h_index))
                     ]
                 )
                 h_index += 1
-        if m > n:
+
+        if m < n:
             board = board.transpose(-1, 0)
 
         check_0_win = []
         check_1_win = []
 
-        for i in possible_rows:
-            temp_0 = [j == 0 for j in i]
-            temp_1 = [m == 1 for m in i]
-
-            for k in range(len(i) - 3):
+        for i in range(len(possible_rows_0)):
+            for k in range(len(possible_rows_0[i]) - 3):
                 # check every subarray of length 4 to if there are 4 connected
-                check_0_win.append(sum(temp_0[k : k + 4]))
-                check_1_win.append(sum(temp_1[k : k + 4]))
+                check_0_win.append(sum(possible_rows_0[i][k : k + 4]))
+                check_1_win.append(sum(possible_rows_1[i][k : k + 4]))
 
         return (4 in check_0_win, 4 in check_1_win)
 
