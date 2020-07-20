@@ -473,130 +473,63 @@ class Connect4(Game):
         return self.get_legal_moves(self._board)
 
     @staticmethod
-    def winning_move(board, col) -> bool:
-        """
-        Check if the last move on columns `col` lead to victory
-        """
-        height = board.shape[0]
-        width = board.shape[1]
-
-        row = height - 1
-        while row >= 0 and board[row, col] != -1:
-            row -= 1
-
-        player = board[row, col]
-        if height - row >= 4:
-            # check vertically
-            r = row - 1
-            while r > height and board[r, col] == player:
-                r -= 1
-            if r - row >= 4:
-                return True
-
-        # check horizontally
-        c1 = col - 1
-        while c1 >= 0 and board[row, c1] == player:
-            c1 -= 1
-        c2 = col + 1
-        while c2 < width and board[row, c2] == player:
-            c2 += 1
-        if c2 - c1 > 4:
-            return True
-
-        # check first diagonal
-        d1 = 1
-        while (
-            row - d1 >= 0
-            and col - d1 >= 0
-            and board[row - d1, col - d1] == player
-        ):
-            d1 += 1
-        d2 = 1
-        while (
-            row + d2 < height
-            and col + d2 < width
-            and board[row + d2, col + d2] == player
-        ):
-            d2 += 1
-        if d2 + d1 > 4:
-            return True
-
-        # check second diagonal
-        d1 = 1
-        while (
-            row - d1 >= 0
-            and col + d1 < width
-            and board[row - d1, col + d1] == player
-        ):
-            d1 += 1
-        d2 = 1
-        while (
-            row + d2 < height
-            and col - d2 >= 0
-            and board[row + d2, col - d2] == player
-        ):
-            d2 += 1
-        if d2 + d1 > 4:
-            return True
-
-        return False
-
-    @staticmethod
     def get_game_status(board) -> tuple:
         """
         Checks to see if any player has reached Victory. Stores all the
         columns, rows, and diagonals of the tensor in a list of lists,
         and then checks every subarray to see if there are 4 pieces in a
-        row. Currently works for square boards and long boards.
-        Tall boards currently working on.
+        row. Works for all rectangular boards
         """
         possible_rows = []
         m = board.shape[0]
         n = board.shape[1]
 
+        if n > m:
+            board = board.transpose(-1, 0)
+            m = board.shape[0]
+            n = board.shape[1]
+
+        print(board)
         for i in range(m):
             possible_rows.append(board[i, :].tolist())
 
         for i in range(n):
             possible_rows.append(board[:, i].tolist())
+
         # h_index starts incrementing once you reach the base
         h_index = 0
         for i in range(2 * min(m, n) - 7 + abs(m - n)):
-
-            if m <= n:
-
-                if 4 + i < m:
-                    possible_rows.append(
-                        [board[3 + i - j, j].item() for j in range(4 + i)]
-                    )
-                    possible_rows.append(
-                        [board[m - 4 - i + j, j].item() for j in range(4 + i)]
-                    )
-                elif (4 + i) >= m and 4 + i <= n:
-                    possible_rows.append(
-                        [
-                            board[m - 1 - j, j + h_index].item()
-                            for j in range(m)
-                        ]
-                    )
-                    possible_rows.append(
-                        [board[j, j + h_index].item() for j in range(m)]
-                    )
-                    h_index += 1
-                elif 4 + i > n:
-                    possible_rows.append(
-                        [
-                            board[m - 1 - j, j + h_index].item()
-                            for j in range(max(4, n - h_index))
-                        ]
-                    )
-                    possible_rows.append(
-                        [
-                            board[j, j + h_index].item()
-                            for j in range(max(4, n - h_index))
-                        ]
-                    )
-                    h_index += 1
+            if 4 + i < m:
+                possible_rows.append(
+                    [board[3 + i - j, j].item() for j in range(4 + i)]
+                )
+                possible_rows.append(
+                    [board[m - 4 - i + j, j].item() for j in range(4 + i)]
+                )
+            elif (4 + i) >= m and 4 + i <= n:
+                possible_rows.append(
+                    [board[m - 1 - j, j + h_index].item() for j in range(m)]
+                )
+                possible_rows.append(
+                    [board[j, j + h_index].item() for j in range(m)]
+                )
+                h_index += 1
+            elif 4 + i > n:
+                possible_rows.append(
+                    [
+                        board[m - 1 - j, j + h_index].item()
+                        for j in range(max(4, n - h_index))
+                    ]
+                )
+                possible_rows.append(
+                    [
+                        board[j, j + h_index].item()
+                        for j in range(max(4, n - h_index))
+                    ]
+                )
+                h_index += 1
+        if m > n:
+            board = board.transpose(-1, 0)
 
         check_0_win = []
         check_1_win = []
