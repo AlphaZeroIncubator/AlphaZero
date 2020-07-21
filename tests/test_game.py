@@ -394,7 +394,7 @@ class Test_Connect4:
         assert torch.all(board.eq(-1))
         assert board.shape == (6, 7)
 
-    def test_1(self):
+    def test_get_legal_moves(self):
         legal_moves = Connect4.get_legal_moves(self.dummy_tensor)
 
         assert torch.all(legal_moves.eq(self.dummy_tensor[0, :] == -1))
@@ -732,7 +732,7 @@ class Test_Connect4:
         status = Connect4.get_game_status(self.dummy_tensor)
         assert status == (False, False)
 
-        # test boards of dimensions 7*9, to try diff dimensions
+        # test boards of dimensions 7*9(method works for all types of rectangles)
 
         board = torch.Tensor(
             [
