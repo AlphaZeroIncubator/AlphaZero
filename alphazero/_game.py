@@ -417,6 +417,10 @@ class Connect4(Game):
         Make a move on the board. Should be a valid move and return a valid
         game board.
         """
+
+        if not isinstance(move, int):
+            raise TypeError(f"move must be of type int, was type {type(move)}")
+
         self._board = self.board_after_move(
             self._board, self._players[self._move_count % 2], (move,)
         )
