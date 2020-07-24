@@ -374,7 +374,7 @@ class Test_Connect4:
 
         assert torch.all(board.eq(next_state))
 
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             Connect4.board_after_move(initial, 0, (1, 1))
 
         with pytest.raises(TypeError):
