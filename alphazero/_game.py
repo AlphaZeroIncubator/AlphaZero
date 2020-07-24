@@ -439,6 +439,8 @@ class Connect4(Game):
             raise TypeError(
                 f"move is of type {type(move)} but must be a tuple"
             )
+        if not len(move) == 1:
+            raise ValueError(f"move is of length {len(move)} but must be 1")
 
         if player not in (0, 1):
             raise ValueError(f"invalid player for move {move}")
