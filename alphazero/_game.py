@@ -596,7 +596,7 @@ class Connect4(Game):
         Check if the board state represents a game that is over. This should
         just return a boolean True/False.
         """
-        result = Connect4.result(board)
+        result = Connect4.result(board, 0)
         if result is None:
             return False
         # implicit else
