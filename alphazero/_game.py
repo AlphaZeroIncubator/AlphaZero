@@ -412,7 +412,7 @@ class Connect4(Game):
         game board.
         """
         self._board = self.board_after_move(
-            self._board, self._players[self._move_count % 2], move
+            self._board, self._players[self._move_count % 2], (move,)
         )
         self._move_count += 1
 
