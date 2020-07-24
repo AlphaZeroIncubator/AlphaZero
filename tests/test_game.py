@@ -344,11 +344,11 @@ class Test_Connect4:
 
     def test_board_after_move(self):
         initial = Connect4.get_initial_board()
-        board = Connect4.board_after_move(initial, 0, 0)
+        board = Connect4.board_after_move(initial, 0, (0,))
 
         assert torch.all(board.eq(self.dummy_tensor))
 
-        board = Connect4.board_after_move(board, 1, 1)
+        board = Connect4.board_after_move(board, 1, (1,))
 
         next_state = torch.Tensor(
             [
