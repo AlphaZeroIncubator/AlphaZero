@@ -420,20 +420,22 @@ class Connect4(Game):
             raise ValueError(f"Board state {self._board} is not valid.")
 
     @staticmethod
-    def board_after_move(board, player: int, move: int):
+    def board_after_move(board, player: int, move: (int,)):
         """
         Make a move on the board and return it. Does not affect any instances
         of the class. Should be a valid move and return a valid game board.
         """
-        if not isinstance(move, int):
-            raise TypeError(f"move is of type {type(move)} but must be an int")
+        if not isinstance(move, tuple):
+            raise TypeError(
+                f"move is of type {type(move)} but must be a tuple"
+            )
 
         if player not in (0, 1):
             raise ValueError(f"invalid player for move {move}")
 
         if not any((board[:, move] == -1)):
             raise ValueError(f"Column is full")
-        if move > board.shape[0]:
+        if move[0] > board.shape[0]:
             raise IndexError(
                 f"invalid move {move} for board shaped {board.shape}"
             )
@@ -583,8 +585,8 @@ class Connect4(Game):
         for i in range(len(possible_rows_0)):
             for k in range(len(possible_rows_0[i]) - 3):
                 # check every subarray of length 4 to if there are 4 connected
-                check_0_win.append(sum(possible_rows_0[i][k : k + 4]))
-                check_1_win.append(sum(possible_rows_1[i][k : k + 4]))
+                check_0_win.append(sum(possible_rows_0[i][k : k + 4]))  # noqa
+                check_1_win.append(sum(possible_rows_1[i][k : k + 4]))  # noqa
 
         return (4 in check_0_win, 4 in check_1_win)
 
