@@ -381,13 +381,13 @@ class Test_Connect4:
             Connect4.board_after_move(initial, 0, [1, 1])
 
         with pytest.raises(ValueError):
-            Connect4.board_after_move(final_state, 0, 0)
+            Connect4.board_after_move(final_state, 0, (0,))
 
         with pytest.raises(ValueError):
-            Connect4.board_after_move(initial, 2, 1)
+            Connect4.board_after_move(initial, 2, (1,))
 
         with pytest.raises(IndexError):
-            Connect4.board_after_move(initial, 0, 10)
+            Connect4.board_after_move(initial, 0, (10,))
 
     def test_get_initial_board(self):
         board = Connect4.get_initial_board()
