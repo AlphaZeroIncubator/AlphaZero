@@ -172,7 +172,7 @@ class TicTacToe(Game):
         if not isinstance(move, int):
             raise TypeError(f"move must be of type int, was type {type(move)}")
 
-        move = (move // game.width, move % game.height)
+        move = (move // self.width, move % self.height)
 
         self._board = self.board_after_move(
             self._board, self._players[self._move_count % 2], move
