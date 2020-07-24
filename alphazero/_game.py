@@ -163,11 +163,17 @@ class TicTacToe(Game):
         self._move_count = 0
         self._players = [0, 1]
 
-    def make_move(self, move: (int, int)):
+    def make_move(self, move: int):
         """
         Make a move on the board. Should be a valid move and return a valid
         game board.
         """
+
+        if not isinstance(move, int):
+            raise TypeError(f"move must be of type int, was type {type(move)}")
+
+        move = (move // game.width, move % game.height)
+
         self._board = self.board_after_move(
             self._board, self._players[self._move_count % 2], move
         )

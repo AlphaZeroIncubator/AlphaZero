@@ -37,23 +37,23 @@ class Test_TicTacToe:
         assert torch.all(ttt.board_state.eq(board))
 
     def test_make_move(self):
-        self.ttt.make_move((0, 0))
+        self.ttt.make_move(0)
 
         result = self.dummy_tensor
 
         assert torch.all(self.ttt.board_state.eq(result))
 
         with pytest.raises(TypeError):
-            self.ttt.make_move(1)
+            self.ttt.make_move((1,))
 
         with pytest.raises(TypeError):
             self.ttt.make_move([1, 1])
 
         with pytest.raises(ValueError):
-            self.ttt.make_move((1, 1, 1))
+            self.ttt.make_move(10)
 
         with pytest.raises(IndexError):
-            self.ttt.make_move((3, 1))
+            self.ttt.make_move(12)
 
         self.ttt.reset()
 
@@ -99,7 +99,7 @@ class Test_TicTacToe:
         assert torch.all(legal_moves.eq(True))
 
     def test_current_legal_moves(self):
-        self.ttt.make_move((0, 0))
+        self.ttt.make_move(0)
 
         self.ttt.current_legal_moves()
         self.ttt.reset()
@@ -204,7 +204,7 @@ class Test_TicTacToe:
         assert torch.all(ttt.board_state.eq(ttt_json.board_state))
 
     def test_reset_board(self):
-        self.ttt.make_move((0, 0))
+        self.ttt.make_move(0)
         self.ttt.reset()
         assert torch.all(self.ttt.board_state.eq(-1))
         assert self.ttt._move_count == 0
@@ -233,10 +233,10 @@ class Test_TicTacToe:
         assert torch.all(TicTacToe.mirror_v(board).eq(mirrored))
 
     def test_make_move_same_spot(self):
-        self.ttt.make_move((0, 0))
+        self.ttt.make_move(0)
 
         with pytest.raises(ValueError):
-            self.ttt.make_move((0, 0))
+            self.ttt.make_move(0)
 
     def test_board_state_list_of_lists_accepted(self):
         board = [

@@ -143,7 +143,7 @@ def play_game(
         moves = moves * game.current_legal_moves().to(device)
 
         best_move = np.argmax(moves.cpu().detach().numpy())
-        game.make_move((best_move // game.width, best_move % game.height))
+        game.make_move(tuple(best_move))
 
         # i'm not confident this works since it relies on "is"
         current_player = model_2 if current_player is model_1 else model_1
