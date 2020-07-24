@@ -603,7 +603,7 @@ class Connect4(Game):
         return True
 
     @staticmethod
-    def result(board) -> Union[None, int]:
+    def result(board, player) -> Union[None, int]:
         """
         Get the result of the game. This should be 1 for a win for the player
         whose perspective we're looking for, 0 for a draw, -1 for a loss, or
@@ -615,9 +615,9 @@ class Connect4(Game):
         one_win = status[1]
 
         if zero_win:
-            result = 1
+            result = 1 if player == 0 else -1
         elif one_win:
-            result = -1
+            result = 1 if player == 1 else -1
         elif torch.any(board.eq(-1)):
             return None
         else:

@@ -936,10 +936,10 @@ class Test_Connect4:
             ]
         )
 
-        assert Connect4.result(self.dummy_tensor) is None
-        assert Connect4.result(board) == 1
-        assert Connect4.result(board_2) == -1
-        assert Connect4.result(draw) == 0
+        assert Connect4.result(self.dummy_tensor, 0) is None
+        assert Connect4.result(board, 0) == 1
+        assert Connect4.result(board_2, 0) == -1
+        assert Connect4.result(draw, 0) == 0
 
     def test_width(self):
         assert self.C4.width == 7
