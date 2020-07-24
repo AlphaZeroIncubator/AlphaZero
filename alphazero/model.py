@@ -119,10 +119,11 @@ class PolicyHead(nn.Module):
         self.game_width = game.width
         self.game_height = game.height
         self.board_pos = game.width * game.height
+        self.final_shape = game.get_legal_moves(game.get_initial_board()).shape
         self.pass_move = pass_move
         self.policyfc = nn.Linear(
             in_features=self.board_pos * 2,
-            out_features=self.board_pos + self.pass_move,
+            out_features=self.final_shape.numel() + self.pass_move,
         )
 
         self.activation = activation
@@ -138,7 +139,7 @@ class PolicyHead(nn.Module):
         if self.pass_move:
             return probas
         else:
-            return probas.view(self.game_width, self.game_height)
+            return probas.view(self.final_shape)
 
 
 class ValueHead(nn.Module):
