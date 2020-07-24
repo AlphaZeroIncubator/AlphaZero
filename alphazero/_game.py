@@ -434,7 +434,7 @@ class Connect4(Game):
             raise ValueError(f"invalid player for move {move}")
 
         if not any((board[:, move] == -1)):
-            raise ValueError(f"Column is full")
+            raise ValueError("Column is full")
         if move[0] > board.shape[0]:
             raise IndexError(
                 f"invalid move {move} for board shaped {board.shape}"
