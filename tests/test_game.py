@@ -49,7 +49,7 @@ class Test_TicTacToe:
         with pytest.raises(TypeError):
             self.ttt.make_move([1, 1])
 
-        with pytest.raises(ValueError):
+        with pytest.raises(IndexError):
             self.ttt.make_move(10)
 
         with pytest.raises(IndexError):
